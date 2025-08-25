@@ -60,16 +60,68 @@ const quickstart = async (filePath: string) => {
 // This file handles OCR-related API requests
 export async function POST(req: NextRequest) {
   try {
-    const data = await req.json();
-    // TODO: Add OCR processing logic here
+    const { image, filename } = await req.json();
+    
+    if (!image) {
+      return NextResponse.json({ success: false, error: 'No image provided' }, { status: 400 });
+    }
+    
+    console.log(`Processing file: ${filename}`);
+    
+    // Extract base64 data (remove data:image/...;base64, prefix)
+    const base64Data = image.split(',')[1];
+    
+    // Process with Google Document AI
+    const name = client.processorPath(
+      documentAIProjectId,
+      documentAILocation,
+      documentAIProcessorId
+    );
 
+    const request = {
+      name,
+      rawDocument: {
+        content: base64Data,
+        mimeType: filename.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg',
+      },
+      processOptions: {
+        ocrConfig: {
+          premiumFeatures: {
+            enableMathOcr: true
+          }
+        }
+      }
+    };
 
-    // request ocr api 
-    const response = await axios.post('http://localhost:8000', data);
-
-    return NextResponse.json({ success: true, data });
+    console.log('Sending request to Document AI...');
+    const [result] = await client.processDocument(request);
+    const { document } = result;
+    
+    console.log('Document processed successfully');
+    console.log(`Total pages processed: ${document?.pages?.length || 0}`);
+    
+    // Extract page-by-page information
+    const pages = document?.pages?.map((page, index) => ({
+      pageNumber: index + 1,
+      text: page.paragraphs?.map(p => p.layout?.textAnchor?.content || '').join('\n') || '',
+      width: page.dimension?.width || 0,
+      height: page.dimension?.height || 0
+    })) || [];
+    
+    return NextResponse.json({ 
+      success: true, 
+      result: document?.text, // Full document text
+      pages: pages, // Individual page data
+      totalPages: document?.pages?.length || 0,
+      filename: filename 
+    });
+    
   } catch (error) {
-    return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
+    console.error('OCR processing error:', error);
+    return NextResponse.json({ 
+      success: false, 
+      error: (error as Error).message 
+    }, { status: 500 });
   }         
 }
 

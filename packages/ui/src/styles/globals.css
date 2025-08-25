@@ -120,8 +120,35 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    /* Hide scrollbar for all elements */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
   }
+
+  /* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+  *::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Ensure html and body still allow scrolling but hide scrollbar */
+  html {
+    overflow-y: scroll; /* Allow vertical scrolling */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE */
+  }
+
+  html::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for WebKit browsers */
+  }
+
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE */
+  }
+
+  body::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for WebKit browsers */
   }
 }

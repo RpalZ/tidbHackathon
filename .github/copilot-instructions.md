@@ -60,21 +60,6 @@ pnpm dev --filter=web
 # Runs on http://localhost:3000 (or next available port)
 ```
 
-### Backend Setup
-
-**For full OCR functionality:**
-```bash
-cd apps/backend
-pip install -r requirements.txt
-pip install paddleocr  # Heavy dependency (~2GB), requires network access
-python3 -m uvicorn main:app --host 0.0.0.0 --port 8000
-```
-
-**For development/testing without OCR:**
-Use the simplified backend that mocks OCR responses - see `main.py` @app.get("/test") endpoint.
-
-**⚠️ Backend Dependency Issue:**
-PaddleOCR requires PaddlePaddle framework and model downloads. In network-restricted environments, the backend will fail to start. For testing, use mock endpoints or temporarily modify imports.
 
 ### Validation Commands
 
@@ -115,7 +100,7 @@ For development, these can be omitted as the app includes mock OCR functionality
 │   │   │   └── api/ocr/       # OCR API endpoints
 │   │   ├── components/        # App-specific components
 │   │   └── package.json       # Web app dependencies
-│   └── backend/               # FastAPI Python server
+│   └── backend/               # FastAPI Python server (deprecated)
 │       ├── main.py           # OCR processing server
 │       ├── requirements.txt  # Python dependencies
 │       └── output/           # OCR processing results
