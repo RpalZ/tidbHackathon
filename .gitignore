@@ -43,3 +43,5 @@ __pycache__/
 tidb-service-key.json
 
 paddleocr_env
+
+json/
