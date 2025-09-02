@@ -348,6 +348,48 @@ export default function SessionPage() {
     }, 5000)
   }
 
+  // Test OCR endpoint function
+  const testOCR = async () => {
+    try {
+      console.log('🧪 Testing OCR endpoint...')
+      
+      // Test with GET request first
+      const getResponse = await fetch('/api/ocr', {
+        method: 'GET'
+      })
+      
+      if (getResponse.ok) {
+        const getResult = await getResponse.json()
+        console.log('✅ GET Test Result:', getResult)
+      } else {
+        console.error('❌ GET Test Failed:', getResponse.status)
+      }
+      
+      // Test with POST request (empty payload)
+      // const postResponse = await fetch('/api/ocr', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json'
+      //   },
+      //   body: JSON.stringify({
+      //     image: 'test',
+      //     filename: 'test.pdf'
+      //   })
+      // })
+      
+      // if (postResponse.ok) {
+      //   const postResult = await postResponse.json()
+      //   console.log('✅ POST Test Result:', postResult)
+      // } else {
+      //   const error = await postResponse.json()
+      //   console.error('❌ POST Test Failed:', error)
+      // }
+      
+    } catch (error) {
+      console.error('❌ OCR Test Error:', error)
+    }
+  }
+
   // Loading state
   if (status === "loading" || loading) {
     return (
@@ -427,6 +469,14 @@ export default function SessionPage() {
         </div>
         
         <div className="flex items-center space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={testOCR}
+            className="bg-yellow-100 hover:bg-yellow-200 border-yellow-300 text-yellow-800"
+          >
+            🧪 Test OCR
+          </Button>
           <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${getStatusColor(sessionData.status)}`}>
             {getStatusIcon(sessionData.status)}
             <span>{sessionData.status.toUpperCase()}</span>

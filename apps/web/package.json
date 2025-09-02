@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@google-cloud/documentai": "^9.3.0",
+    "@napi-rs/canvas": "^0.1.78",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
@@ -20,16 +21,24 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@thednp/dommatrix": "^2.0.12",
     "@workspace/ui": "workspace:*",
     "axios": "^1.11.0",
+    "canvas": "^3.2.0",
     "class-variance-authority": "^0.7.1",
+    "dommatrix": "^1.0.3",
     "dotenv": "^17.2.1",
     "lucide-react": "^0.475.0",
     "next": "^15.4.5",
     "next-auth": "5.0.0-beta.29",
     "next-themes": "^0.4.6",
+    "pdf-lib": "^1.17.1",
+    "pdf-poppler": "^0.2.1",
+    "pdf2pic": "^3.2.0",
+    "pdfjs-dist": "^5.4.149",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "sharp": "^0.34.3"
   },
   "devDependencies": {
     "@types/node": "^20.19.9",

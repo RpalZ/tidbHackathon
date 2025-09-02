@@ -4,10 +4,12 @@ import { Button } from "@workspace/ui/components/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card"
 import Link from "next/link"
 import React from "react"
+import { useSession } from "next-auth/react"
 import { FileText, Zap, Shield, Users, Upload, Download, Clock, Image, BookOpen, Brain, CheckCircle, AlertCircle, Search, GraduationCap } from "lucide-react"
 
 export default function Page() {
   const [data, setData] = React.useState<string | null>(null)
+  const { data: session } = useSession()
 
   const handleClick = async () => {  
     console.log("Button clicked, analyzing test paper...")
@@ -73,7 +75,7 @@ Score: 7/10 - Great work! Focus on the concepts above to improve.`)
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Button size="lg" asChild className="h-12 px-8 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300">
-                <Link href="/auth">Start Learning</Link>
+                <Link href={session ? "/dashboard" : "/auth"}>Start Learning</Link>
               </Button>
               <Button variant="outline" size="lg" asChild className="h-12 px-8 rounded-lg border-2 hover:bg-muted/50 transition-all duration-300">
                 <Link href="#features">See How It Works</Link>

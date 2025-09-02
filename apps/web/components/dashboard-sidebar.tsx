@@ -40,7 +40,7 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ activeTab, onTabChange, marginTop }: DashboardSidebarProps) {
   return (
-    <Sidebar className={`mt-${marginTop}`}>
+    <Sidebar className="mt-16">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
