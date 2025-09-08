@@ -5,6 +5,12 @@ import { z } from 'zod';
 import {zodTextFormat} from "openai/helpers/zod"
 import fs from 'fs';
 import { prisma } from '@/lib/prisma';
+import { 
+  batchInsertQuestionsWithVectors, 
+  generateEmbedding, 
+  vectorToString, 
+  executeVectorSQL 
+} from '@/lib/tidb-vector';
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -98,18 +104,45 @@ export async function POST(request: NextRequest) {
   for (let qnas of qna.QnAs) {
     const semanticText = qnas.semanticSummary;
 
-    // convert to embedding
+    // convert to embedding using our utility function
     const embeddingResponse = await client.embeddings.create({
       model: "text-embedding-3-small",
       input: semanticText,
     });
 
-    //input to tidb db
+    // Individual embeddings are handled by batchInsertQuestionsWithVectors below
   }
 
+  // Use our utility functions to store in TiDB with vectors
+  // First, we need to create a File record to link questions to
+  const savedFile = await prisma.file.create({
+    data: {
+      userId: 'system', // You'll want to get this from auth session
+      name: filename,
+      size: 0, // Set appropriate size if available
+      type: 'qsPaper', // or determine from filename/content
+      mimetype: 'application/pdf',
+      // content: can be added if you have the file buffer
+    }
+  });
 
+  // Use our batch insert utility to store all questions with vectors
+  const insertResults = await batchInsertQuestionsWithVectors(
+    qna.QnAs.map((q: any) => ({
+      questionNumber: q.questionNumber,
+      question: q.question,
+      type: q.type,
+      parentQuestionNumber: q.parentQuestionNumber,
+      isMultipleChoice: q.isMultipleChoice,
+      imageDescription: q.imageDescription,
+      answer: q.answer,
+      pageNumber: q.pageNumber,
+      semanticSummary: q.semanticSummary,
+    })),
+    savedFile.id
+  );
 
-  //inputting to db 
+  console.log('Batch insert results:', insertResults);  //inputting to db 
 
 
 

@@ -16,13 +16,82 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+  processorSessions ProcessorSession[]
   // Optional for WebAuthn support
   Authenticator Authenticator[]
  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model ProcessorSession {
+  id        String   @id @default(cuid())
+  userId    String
+  status    String
+  result    String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  files     File[]
+  user User @relation(fields: [userId], references: [id])
+  @@index([userId])
+}
+
+model Questions {
+    id                    String   @id @default(cuid())
+    questionNumber        String   // "1", "2(a)", "3b(i)", etc.
+    question              String   @db.Text
+    type                  String   // "main", "subquestion", "subpart"
+    parentQuestionNumber  String?  // Parent question identifier
+    isMultipleChoice      Boolean  @default(false)
+    imageDescription      String?  @db.Text
+    answer                Json?    // Stores answer object (text or mcq format)
+    pageNumber            Int
+    semanticSummary       String   @db.Text // For search purposes
+    
+    // Store vector embedding as TEXT for TiDB compatibility
+    vectorEmbedding       String?  @db.Text // Will be converted to VECTOR(1536) in TiDB
+    
+    // Link to source file
+    fileId                String?
+    file                  File?    @relation(fields: [fileId], references: [id])
+    
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    
+    @@index([questionNumber])
+    @@index([type])
+    @@index([fileId])
+    @@index([isMultipleChoice])
+}
+
+model File {
+    id        String   @id @default(cuid())
+    userId    String
+    name      String
+    size      Int
+    content   Bytes? @db.LongBlob
+    type      String // "qsPaper" or "Markscheme"
+    mimetype  String
+    
+    // Add OCR and vector fields
+    textContent       String? @db.Text               // Full extracted OCR text
+    vectorEmbedding   String? @db.Text               // Document-level vector embedding
+    
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    
+    processorSessionId String?
+    processorSession   ProcessorSession? @relation(fields: [processorSessionId], references: [id])
+    
+    // Relation to extracted questions
+    questions         Questions[]
+    
+    @@index([userId])
+    @@index([mimetype])
+    @@index([type])
+}
  
+
 model Account {
   id                       String  @id @default(cuid())
   userId                   String  // @unique
