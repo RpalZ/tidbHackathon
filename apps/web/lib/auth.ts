@@ -16,6 +16,10 @@ import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
 import GitHub from "next-auth/providers/github"
 
+import { PrismaAdapter } from "@auth/prisma-adapter"
+import { prisma } from "@/lib/prisma";
+
+
 /**
  * NextAuth configuration with Google OAuth provider
  */
@@ -23,18 +27,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   /**
    * In production, make sure NEXTAUTH_URL is set correctly
    */
-  
+  adapter: PrismaAdapter(prisma),
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID!,
       clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+      allowDangerousEmailAccountLinking: true,
       authorization: {
         params: {
           scope: "openid email profile",
         },
       },
     }) as any, // Type workaround for NextAuth v5 compatibility
-    GitHub
+    GitHub({
+      allowDangerousEmailAccountLinking: true,
+    })
   ],
   pages: {
     signIn: "/auth/signin",

@@ -1,0 +1,465 @@
+{
+  "processingMethod": "pdf-to-premium-ocr-master-crop-sequence-entity-mapping",
+  "description": "Single premium OCR call per page using master crop with sequence-based entity mapping",
+  "inputFile": "C:\\Users\\rayap\\OneDrive\\Desktop\\tidbHackathon\\trainingDocs\\07-10.pdf",
+  "totalPages": 4,
+  "totalEntities": 20,
+  "processedPages": [
+    {
+      "pageNumber": 0,
+      "entities": [
+        {
+          "type": "Question",
+          "pageNumber": 0,
+          "originalText": "displacement x.\nWhich of the following graphs shows the variation of E with x for the object? 9 An object oscillates with simple harmonic motion. The object has kinetic energy E and",
+          "enhancedText": "displacement x.\nWhich of the following graphs shows the variation of E with x for the object? 9 An object oscillates with simple harmonic motion. The object has kinetic energy E and",
+          "boundingBoxes": [
+            {
+              "content": "displacement x.\nWhich of the following graphs shows the variation of E with x for the object? 9 An object oscillates with simple harmonic motion. The object has kinetic energy E and",
+              "page": "0",
+              "boundingPoly": [
+                {
+                  "x": 0.07079119235277176,
+                  "y": 0.0731707289814949
+                },
+                {
+                  "x": 0.8138012886047363,
+                  "y": 0.0731707289814949
+                },
+                {
+                  "x": 0.8138012886047363,
+                  "y": 0.13330529630184174
+                },
+                {
+                  "x": 0.07079119235277176,
+                  "y": 0.13330529630184174
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true,
+          "processingMethod": "master-crop-sequence-based-entity-mapping",
+          "stage1Index": 0,
+          "hasMasterMatch": true
+        },
+        {
+          "type": "Image",
+          "pageNumber": 0,
+          "originalContent": "E E\nk\n0\nX A C (This sha's Ep)\nΕΛ\nk 0\nX Ekat x=0 0\nX\n10 D X",
+          "confidence": 1,
+          "processed": false,
+          "premiumOcrUsed": false,
+          "note": "Images excluded from OCR processing"
+        }
+      ]
+    },
+    {
+      "pageNumber": 1,
+      "entities": [
+        {
+          "type": "Question",
+          "pageNumber": 1,
+          "originalText": "10 A radioactivity monitoring badge is worn by people who might be exposed to radiation.\nThe badge is made from photographic film wrapped in thin paper and then held in a\nplastic holder that has an open window and a lead window, as shown.",
+          "enhancedText": "10 A radioactivity monitoring badge is worn by people who might be exposed to radiation.\nThe badge is made from photographic film wrapped in thin paper and then held in a\nplastic holder that has an open window and a lead window, as shown.",
+          "boundingBoxes": [
+            {
+              "content": "10 A radioactivity monitoring badge is worn by people who might be exposed to radiation.\nThe badge is made from photographic film wrapped in thin paper and then held in a\nplastic holder that has an open window and a lead window, as shown.",
+              "page": "1",
+              "boundingPoly": [
+                {
+                  "x": 0.07198096066713333,
+                  "y": 0.0731707289814949
+                },
+                {
+                  "x": 0.8114217519760132,
+                  "y": 0.0731707289814949
+                },
+                {
+                  "x": 0.8114217519760132,
+                  "y": 0.12026913464069366
+                },
+                {
+                  "x": 0.07198096066713333,
+                  "y": 0.12026913464069366
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true,
+          "processingMethod": "master-crop-sequence-based-entity-mapping",
+          "stage1Index": 0,
+          "hasMasterMatch": true
+        },
+        {
+          "type": "Question",
+          "pageNumber": 1,
+          "originalText": "The film gets darker when exposed to ionising radiation.\nWhich of the following represents the film after the badge is exposed to beta radiation?",
+          "enhancedText": "The film gets darker when exposed to ionising radiation.\nWhich of the following represents the film after the badge is exposed to beta radiation?",
+          "boundingBoxes": [
+            {
+              "content": "The film gets darker when exposed to ionising radiation.\nWhich of the following represents the film after the badge is exposed to beta radiation?",
+              "page": "1",
+              "boundingPoly": [
+                {
+                  "x": 0.10172516107559204,
+                  "y": 0.3246425688266754
+                },
+                {
+                  "x": 0.8114217519760132,
+                  "y": 0.3246425688266754
+                },
+                {
+                  "x": 0.8114217519760132,
+                  "y": 0.36711522936820984
+                },
+                {
+                  "x": 0.10172516107559204,
+                  "y": 0.36711522936820984
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true,
+          "processingMethod": "master-crop-sequence-based-entity-mapping",
+          "stage1Index": 1,
+          "hasMasterMatch": false
+        },
+        {
+          "type": "Image",
+          "pageNumber": 1,
+          "originalContent": "photographic film\nlead window\nopen window plastic holder",
+          "confidence": 0.6675004363059998,
+          "processed": false,
+          "premiumOcrUsed": false,
+          "note": "Images excluded from OCR processing"
+        }
+      ]
+    },
+    {
+      "pageNumber": 2,
+      "entities": [
+        {
+          "type": "Question",
+          "pageNumber": 2,
+          "originalText": "11 The photograph shows a stringed instrument called a cello being played with a bow.",
+          "enhancedText": "11 The photograph shows a stringed instrument called a cello being played with a bow.",
+          "boundingBoxes": [
+            {
+              "content": "11 The photograph shows a stringed instrument called a cello being played with a bow.",
+              "page": "2",
+              "boundingPoly": [
+                {
+                  "x": 0.07138607650995255,
+                  "y": 0.0731707289814949
+                },
+                {
+                  "x": 0.7828673124313354,
+                  "y": 0.0731707289814949
+                },
+                {
+                  "x": 0.7828673124313354,
+                  "y": 0.0874684602022171
+                },
+                {
+                  "x": 0.07138607650995255,
+                  "y": 0.0874684602022171
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true,
+          "processingMethod": "master-crop-sequence-based-entity-mapping",
+          "stage1Index": 0,
+          "hasMasterMatch": true
+        },
+        {
+          "type": "Question",
+          "pageNumber": 2,
+          "originalText": "A standing wave forms on a cello string when the bow moves across the string.\nDeduce whether a thicker string will produce a note of higher or lower frequency\ncompared with a thinner string.\nAssume each string is the same length and at the same tension.",
+          "enhancedText": "A standing wave forms on a cello string when the bow moves across the string.\nDeduce whether a thicker string will produce a note of higher or lower frequency\ncompared with a thinner string.\nAssume each string is the same length and at the same tension.",
+          "boundingBoxes": [
+            {
+              "content": "A standing wave forms on a cello string when the bow moves across the string.\nDeduce whether a thicker string will produce a note of higher or lower frequency\ncompared with a thinner string.\nAssume each string is the same length and at the same tension.",
+              "page": "2",
+              "boundingPoly": [
+                {
+                  "x": 0.10113027691841125,
+                  "y": 0.349453330039978
+                },
+                {
+                  "x": 0.7626413106918335,
+                  "y": 0.349453330039978
+                },
+                {
+                  "x": 0.7626413106918335,
+                  "y": 0.4373423159122467
+                },
+                {
+                  "x": 0.10113027691841125,
+                  "y": 0.4373423159122467
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true,
+          "processingMethod": "master-crop-sequence-based-entity-mapping",
+          "stage1Index": 1,
+          "hasMasterMatch": false
+        },
+        {
+          "type": "Answer",
+          "pageNumber": 2,
+          "originalText": "Thick string has\na greater mass per wuit length, M. =치죠, and T. cavetant: fa\nAs u is greater, f is lover. ✓",
+          "enhancedText": "Thick string has\na greater mass per wuit length, M. =치죠, and T. cavetant: fa\nAs u is greater, f is lover. ✓",
+          "boundingBoxes": [
+            {
+              "content": "Thick string has\na greater mass per wuit length, M. =치죠, and T. cavetant: fa\nAs u is greater, f is lover. ✓",
+              "page": "2",
+              "boundingPoly": [
+                {
+                  "x": 0.11421772837638855,
+                  "y": 0.4714045524597168
+                },
+                {
+                  "x": 0.9179059863090515,
+                  "y": 0.4714045524597168
+                },
+                {
+                  "x": 0.9179059863090515,
+                  "y": 0.6455004215240479
+                },
+                {
+                  "x": 0.11421772837638855,
+                  "y": 0.6455004215240479
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true,
+          "processingMethod": "master-crop-sequence-based-entity-mapping",
+          "stage1Index": 2,
+          "hasMasterMatch": false
+        },
+        {
+          "type": "Image",
+          "pageNumber": 2,
+          "originalContent": "(Source: Vadim Ponomarenko/Alamy Stock Photo)",
+          "confidence": 0.9329884648323059,
+          "processed": false,
+          "premiumOcrUsed": false,
+          "note": "Images excluded from OCR processing"
+        }
+      ]
+    },
+    {
+      "pageNumber": 3,
+      "entities": [
+        {
+          "type": "Answer",
+          "pageNumber": 3,
+          "originalText": "Metal must be copper, as save energy is abo\ntrauferred to the surroundings. calculated value\nof & laver than the true value. ✓",
+          "enhancedText": "Metal must be copper, as save energy is abo\ntrauferred to the surroundings. calculated value\nof & laver than the true value. ✓",
+          "boundingBoxes": [
+            {
+              "content": "Metal must be copper, as save energy is abo\ntrauferred to the surroundings. calculated value\nof & laver than the true value. ✓",
+              "page": "3",
+              "boundingPoly": [
+                {
+                  "x": 0.10588935017585754,
+                  "y": 0.6190075874328613
+                },
+                {
+                  "x": 0.8875669240951538,
+                  "y": 0.6190075874328613
+                },
+                {
+                  "x": 0.8875669240951538,
+                  "y": 0.7287636399269104
+                },
+                {
+                  "x": 0.10588935017585754,
+                  "y": 0.7287636399269104
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true,
+          "processingMethod": "master-crop-sequence-based-entity-mapping",
+          "stage1Index": 0,
+          "hasMasterMatch": true
+        },
+        {
+          "type": "Question",
+          "pageNumber": 3,
+          "originalText": "Deduce whether the metal block was made from copper or tin.",
+          "enhancedText": "Deduce whether the metal block was made from copper or tin.",
+          "boundingBoxes": [
+            {
+              "content": "Deduce whether the metal block was made from copper or tin.",
+              "page": "3",
+              "boundingPoly": [
+                {
+                  "x": 0.10232004523277283,
+                  "y": 0.2910008430480957
+                },
+                {
+                  "x": 0.6079714298248291,
+                  "y": 0.2910008430480957
+                },
+                {
+                  "x": 0.6079714298248291,
+                  "y": 0.30445751547813416
+                },
+                {
+                  "x": 0.10232004523277283,
+                  "y": 0.30445751547813416
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true,
+          "processingMethod": "master-crop-sequence-based-entity-mapping",
+          "stage1Index": 1,
+          "hasMasterMatch": false
+        },
+        {
+          "type": "Answer",
+          "pageNumber": 3,
+          "originalText": "Cm = 307.4 J kj\" k✓",
+          "enhancedText": "Cm = 307.4 J kj\" k✓",
+          "boundingBoxes": [
+            {
+              "content": "Cm = 307.4 J kj\" k✓",
+              "page": "3",
+              "boundingPoly": [
+                {
+                  "x": 0.11302796006202698,
+                  "y": 0.554247260093689
+                },
+                {
+                  "x": 0.4836407005786896,
+                  "y": 0.554247260093689
+                },
+                {
+                  "x": 0.4836407005786896,
+                  "y": 0.5887300372123718
+                },
+                {
+                  "x": 0.11302796006202698,
+                  "y": 0.5887300372123718
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true,
+          "processingMethod": "master-crop-sequence-based-entity-mapping",
+          "stage1Index": 2,
+          "hasMasterMatch": false
+        },
+        {
+          "type": "Question",
+          "pageNumber": 3,
+          "originalText": "The table shows specific heat capacity values for copper and tin.",
+          "enhancedText": "The table shows specific heat capacity values for copper and tin.",
+          "boundingBoxes": [
+            {
+              "content": "The table shows specific heat capacity values for copper and tin.",
+              "page": "3",
+              "boundingPoly": [
+                {
+                  "x": 0.10232004523277283,
+                  "y": 0.16400335729122162
+                },
+                {
+                  "x": 0.6246281862258911,
+                  "y": 0.16400335729122162
+                },
+                {
+                  "x": 0.6246281862258911,
+                  "y": 0.17746004462242126
+                },
+                {
+                  "x": 0.10232004523277283,
+                  "y": 0.17746004462242126
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true,
+          "processingMethod": "master-crop-sequence-based-entity-mapping",
+          "stage1Index": 3,
+          "hasMasterMatch": false
+        },
+        {
+          "type": "Question",
+          "pageNumber": 3,
+          "originalText": "several minutes. 12 A student placed a metal block of mass 220g in boiling water at 100°C for The student then transferred the metal block into 300 g of water at 19°C inside a glass\ncontainer of mass 50g. The final temperature of the water was 23 °C.",
+          "enhancedText": "several minutes. 12 A student placed a metal block of mass 220g in boiling water at 100°C for The student then transferred the metal block into 300 g of water at 19°C inside a glass\ncontainer of mass 50g. The final temperature of the water was 23 °C.",
+          "boundingBoxes": [
+            {
+              "content": "several minutes. 12 A student placed a metal block of mass 220g in boiling water at 100°C for The student then transferred the metal block into 300 g of water at 19°C inside a glass\ncontainer of mass 50g. The final temperature of the water was 23 °C.",
+              "page": "3",
+              "boundingPoly": [
+                {
+                  "x": 0.07138607650995255,
+                  "y": 0.07359125465154648
+                },
+                {
+                  "x": 0.8019036054611206,
+                  "y": 0.07359125465154648
+                },
+                {
+                  "x": 0.8019036054611206,
+                  "y": 0.14886459708213806
+                },
+                {
+                  "x": 0.07138607650995255,
+                  "y": 0.14886459708213806
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true,
+          "processingMethod": "master-crop-sequence-based-entity-mapping",
+          "stage1Index": 4,
+          "hasMasterMatch": false
+        }
+      ]
+    }
+  ],
+  "efficiency": {
+    "originalApproach": "17 individual API calls",
+    "masterCropApproach": "4 master API calls (one per page)",
+    "costReduction": "~76% fewer API calls"
+  },
+  "summary": {
+    "questionsCount": 8,
+    "answersCount": 3,
+    "imagesCount": 3,
+    "masterCropCallsCount": 4,
+    "premiumOcrProcessedCount": 11,
+    "successfulProcessing": 11
+  }
+}

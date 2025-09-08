@@ -253,7 +253,7 @@ export default function SessionPage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          image: base64,
+          file: base64,
           filename: file.name
         })
       })

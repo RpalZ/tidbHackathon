@@ -1,0 +1,368 @@
+{
+  "processingMethod": "pdf-to-premium-ocr-individual-processing",
+  "inputFile": "C:\\Users\\rayap\\OneDrive\\Desktop\\tidbHackathon\\trainingDocs\\07-10.pdf",
+  "totalPages": 4,
+  "totalEntities": 19,
+  "processedPages": [
+    {
+      "pageNumber": 0,
+      "entities": [
+        {
+          "type": "Image",
+          "pageNumber": 0,
+          "originalContent": "ΕΛ Ekat x=0 (This sha's Ep) 0 0\nX\nA E E k 0 10 X X\nC\nD",
+          "confidence": 1,
+          "processed": false,
+          "premiumOcrUsed": false,
+          "note": "Images excluded from OCR processing"
+        },
+        {
+          "type": "Question",
+          "pageNumber": 0,
+          "originalText": "9 An object oscillates with simple harmonic motion. The object has kinetic energy E and\ndisplacement x.\nWhich of the following graphs shows the variation of E with x for the object?",
+          "enhancedText": "9\nAn object oscillates with simple harmonic motion. The object has kinetic energy E_{k} and\ndisplacement x.\nWhich of the following graphs shows the variation of\nE_{1}\nwith x for the object?\n",
+          "boundingBoxes": [
+            {
+              "content": "9 An object oscillates with simple harmonic motion. The object has kinetic energy E and\ndisplacement x.\nWhich of the following graphs shows the variation of E with x for the object?",
+              "page": "0",
+              "boundingPoly": [
+                {
+                  "x": 0.07079119235277176,
+                  "y": 0.0731707289814949
+                },
+                {
+                  "x": 0.8138012886047363,
+                  "y": 0.0731707289814949
+                },
+                {
+                  "x": 0.8138012886047363,
+                  "y": 0.13330529630184174
+                },
+                {
+                  "x": 0.07079119235277176,
+                  "y": 0.13330529630184174
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true
+        }
+      ]
+    },
+    {
+      "pageNumber": 1,
+      "entities": [
+        {
+          "type": "Image",
+          "pageNumber": 1,
+          "originalContent": "photographic film\nlead window\nopen window\nLet's radiation in\nBlockes radiation\n.: gets darker\n.: remains light\nplastic holder",
+          "confidence": 1,
+          "processed": false,
+          "premiumOcrUsed": false,
+          "note": "Images excluded from OCR processing"
+        },
+        {
+          "type": "Image",
+          "pageNumber": 1,
+          "originalContent": "☑\nB\n☑\n☑\nC\nD",
+          "confidence": 1,
+          "processed": false,
+          "premiumOcrUsed": false,
+          "note": "Images excluded from OCR processing"
+        },
+        {
+          "type": "Question",
+          "pageNumber": 1,
+          "originalText": "10 A radioactivity monitoring badge is worn by people who might be exposed to radiation.\nThe badge is made from photographic film wrapped in thin paper and then held in a\nplastic holder that has an open window and a lead window, as shown.",
+          "enhancedText": "10 A radioactivity monitoring badge is worn by people who might be exposed to radiation\nThe badge is made from photographic film wrapped in thin paper and then held in a\nplastic holder that has an open window and a lead window, as shown.\n",
+          "boundingBoxes": [
+            {
+              "content": "10 A radioactivity monitoring badge is worn by people who might be exposed to radiation.\nThe badge is made from photographic film wrapped in thin paper and then held in a\nplastic holder that has an open window and a lead window, as shown.",
+              "page": "1",
+              "boundingPoly": [
+                {
+                  "x": 0.07198096066713333,
+                  "y": 0.0731707289814949
+                },
+                {
+                  "x": 0.8114217519760132,
+                  "y": 0.0731707289814949
+                },
+                {
+                  "x": 0.8114217519760132,
+                  "y": 0.12026913464069366
+                },
+                {
+                  "x": 0.07198096066713333,
+                  "y": 0.12026913464069366
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true
+        },
+        {
+          "type": "Question",
+          "pageNumber": 1,
+          "originalText": "The film gets darker when exposed to ionising radiation.\nWhich of the following represents the film after the badge is exposed to beta radiation?",
+          "enhancedText": "The film gets darker when exposed to ionising radiation.\nWhich of the following represents the film after the badge is exposed to beta radiation?\n",
+          "boundingBoxes": [
+            {
+              "content": "The film gets darker when exposed to ionising radiation.\nWhich of the following represents the film after the badge is exposed to beta radiation?",
+              "page": "1",
+              "boundingPoly": [
+                {
+                  "x": 0.10172516107559204,
+                  "y": 0.3246425688266754
+                },
+                {
+                  "x": 0.8114217519760132,
+                  "y": 0.3246425688266754
+                },
+                {
+                  "x": 0.8114217519760132,
+                  "y": 0.36711522936820984
+                },
+                {
+                  "x": 0.10172516107559204,
+                  "y": 0.36711522936820984
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true
+        }
+      ]
+    },
+    {
+      "pageNumber": 2,
+      "entities": [
+        {
+          "type": "Answer",
+          "pageNumber": 2,
+          "originalText": "Thick string has\na greater mass per wuit length, M.\n✓✓\n=치죠, and T. cavetant: fa\nAs u is greater, f is lover. ✓",
+          "enhancedText": "Thick string\na\nhas\ngreater mass\nper wit length, u\nf=\\frac{1}{\\lambda}\\sqrt{\\frac{T}{\\mu}} λ and I constant f\\propto\\frac{1}{\\sqrt{\\mu}}\nis greater, f is lover.✓\nAs μ\n",
+          "boundingBoxes": [
+            {
+              "content": "Thick string has\na greater mass per wuit length, M.\n✓✓\n=치죠, and T. cavetant: fa\nAs u is greater, f is lover. ✓",
+              "page": "2",
+              "boundingPoly": [
+                {
+                  "x": 0.11421772837638855,
+                  "y": 0.4714045524597168
+                },
+                {
+                  "x": 0.9179059863090515,
+                  "y": 0.4714045524597168
+                },
+                {
+                  "x": 0.9179059863090515,
+                  "y": 0.6455004215240479
+                },
+                {
+                  "x": 0.11421772837638855,
+                  "y": 0.6455004215240479
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true
+        },
+        {
+          "type": "Question",
+          "pageNumber": 2,
+          "originalText": "11 The photograph shows a stringed instrument called a cello being played with a bow.",
+          "enhancedText": "11\nThe photograph shows a stringed instrument called a cello being played with a bow\n",
+          "boundingBoxes": [
+            {
+              "content": "11 The photograph shows a stringed instrument called a cello being played with a bow.",
+              "page": "2",
+              "boundingPoly": [
+                {
+                  "x": 0.07138607650995255,
+                  "y": 0.0731707289814949
+                },
+                {
+                  "x": 0.7828673124313354,
+                  "y": 0.0731707289814949
+                },
+                {
+                  "x": 0.7828673124313354,
+                  "y": 0.0874684602022171
+                },
+                {
+                  "x": 0.07138607650995255,
+                  "y": 0.0874684602022171
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true
+        },
+        {
+          "type": "Question",
+          "pageNumber": 2,
+          "originalText": "A standing wave forms on a cello string when the bow moves across the string.\nDeduce whether a thicker string will produce a note of higher or lower frequency\ncompared with a thinner string.\nAssume each string is the same length and at the same tension.",
+          "enhancedText": "A standing wave forms on a cello string when the bow moves across the string.\nDeduce whether a thicker string will produce a note of higher or lower frequency\ncompared with a thinner string.\nAssume each string is the same length and at the same tension.\n",
+          "boundingBoxes": [
+            {
+              "content": "A standing wave forms on a cello string when the bow moves across the string.\nDeduce whether a thicker string will produce a note of higher or lower frequency\ncompared with a thinner string.\nAssume each string is the same length and at the same tension.",
+              "page": "2",
+              "boundingPoly": [
+                {
+                  "x": 0.10113027691841125,
+                  "y": 0.349453330039978
+                },
+                {
+                  "x": 0.7626413106918335,
+                  "y": 0.349453330039978
+                },
+                {
+                  "x": 0.7626413106918335,
+                  "y": 0.4373423159122467
+                },
+                {
+                  "x": 0.10113027691841125,
+                  "y": 0.4373423159122467
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true
+        }
+      ]
+    },
+    {
+      "pageNumber": 3,
+      "entities": [
+        {
+          "type": "Answer",
+          "pageNumber": 3,
+          "originalText": "Energy lost by metal = Energy gained by water + glass ✓\nΔΘ\nΔΕ = mm Cm DOMV=WwCwDQw + MgCg sog\nW\nC = 0.300×4200×(23-19)+0.050×840×(23-19)\n0-220×(100-23)✓\nCm = 307.4 J kj\" k✓\nMetal must be copper, as save energy is abo\ntrauferred to the surroundings. calculated value\nof & laver than the true value. ✓",
+          "enhancedText": "water + gloss\n8\nEnergy lost by metal\nby metal \nEvergy gained by water +\n✓\n\\DeltaE=\\omega_{w}c_{w}\\Delta\\theta_{w}/=m_{w}c_{w}\\Delta\\theta_{w}+m_{g}c_{g}\\Delta\\theta_{g}\n=\\underline{0\\cdot300\\times4200\\times(23-19)+0.050\\times840\\times(23-19)}\n0·220 × (100-23)✓\nc_{m}=307.4~J~kg^{-1}k^{-1}/\nCm\nas\nMetal must be\ncopper, Save energy is also\ntransferred to the surroundings.: calculated value\nof c lower than the true value.✓\n",
+          "boundingBoxes": [
+            {
+              "content": "Energy lost by metal = Energy gained by water + glass ✓\nΔΘ\nΔΕ = mm Cm DOMV=WwCwDQw + MgCg sog\nW\nC = 0.300×4200×(23-19)+0.050×840×(23-19)\n0-220×(100-23)✓\nCm = 307.4 J kj\" k✓\nMetal must be copper, as save energy is abo\ntrauferred to the surroundings. calculated value\nof & laver than the true value. ✓",
+              "page": "3",
+              "boundingPoly": [
+                {
+                  "x": 0.09518144279718399,
+                  "y": 0.3519764542579651
+                },
+                {
+                  "x": 0.9339678883552551,
+                  "y": 0.3519764542579651
+                },
+                {
+                  "x": 0.9339678883552551,
+                  "y": 0.7287636399269104
+                },
+                {
+                  "x": 0.09518144279718399,
+                  "y": 0.7287636399269104
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true
+        },
+        {
+          "type": "Image",
+          "pageNumber": 3,
+          "originalContent": "Metal tin copper Specific heat capacity / Jkg¯¹K¯¹\n390\n230",
+          "confidence": 0.9992371797561646,
+          "processed": false,
+          "premiumOcrUsed": false,
+          "note": "Images excluded from OCR processing"
+        },
+        {
+          "type": "Question",
+          "pageNumber": 3,
+          "originalText": "12 A student placed a metal block of mass 220g in boiling water at 100°C for\nseveral minutes.\nThe student then transferred the metal block into 300 g of water at 19°C inside a glass\ncontainer of mass 50g. The final temperature of the water was 23 °C.\nThe table shows specific heat capacity values for copper and tin.",
+          "enhancedText": "12 A student placed a metal block of mass 220 g in boiling water at 100^{\\circ}C for\nseveral minutes.\nThe student then transferred the metal block into 300 g of water at 19^{\\circ}C inside a glass\ncontainer of mass 50 g. The final temperature of the water was\n23^{\\circ}C\n.\nThe table shows specific heat capacity values for copper and tin.\n",
+          "boundingBoxes": [
+            {
+              "content": "12 A student placed a metal block of mass 220g in boiling water at 100°C for\nseveral minutes.\nThe student then transferred the metal block into 300 g of water at 19°C inside a glass\ncontainer of mass 50g. The final temperature of the water was 23 °C.\nThe table shows specific heat capacity values for copper and tin.",
+              "page": "3",
+              "boundingPoly": [
+                {
+                  "x": 0.07138607650995255,
+                  "y": 0.07359125465154648
+                },
+                {
+                  "x": 0.8019036054611206,
+                  "y": 0.07359125465154648
+                },
+                {
+                  "x": 0.8019036054611206,
+                  "y": 0.17746004462242126
+                },
+                {
+                  "x": 0.07138607650995255,
+                  "y": 0.17746004462242126
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true
+        },
+        {
+          "type": "Question",
+          "pageNumber": 3,
+          "originalText": "Deduce whether the metal block was made from copper or tin.\nspecific heat capacity of water = 4200Jkg¯¹K¯¹\nspecific heat capacity of glass = 840 JkgK¹",
+          "enhancedText": "Deduce whether the metal block was made from copper or tin.\n=\nspecific heat capacity of water =4200~J~kg^{-1}K^{-1}\nspecific heat capacity of glass\n=840~Jkg^{-1}K^{-1}\n",
+          "boundingBoxes": [
+            {
+              "content": "Deduce whether the metal block was made from copper or tin.\nspecific heat capacity of water = 4200Jkg¯¹K¯¹\nspecific heat capacity of glass = 840 JkgK¹",
+              "page": "3",
+              "boundingPoly": [
+                {
+                  "x": 0.10172516107559204,
+                  "y": 0.2910008430480957
+                },
+                {
+                  "x": 0.6079714298248291,
+                  "y": 0.2910008430480957
+                },
+                {
+                  "x": 0.6079714298248291,
+                  "y": 0.3502943515777588
+                },
+                {
+                  "x": 0.10172516107559204,
+                  "y": 0.3502943515777588
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "processed": true,
+          "premiumOcrUsed": true
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "questionsCount": 7,
+    "answersCount": 2,
+    "imagesCount": 4,
+    "premiumOcrProcessedCount": 9,
+    "successfulProcessing": 9
+  }
+}
