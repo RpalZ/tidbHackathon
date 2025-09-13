@@ -4,13 +4,18 @@ import { DataService } from '@/lib/dataService';
 import { z } from 'zod';
 import {zodTextFormat} from "openai/helpers/zod"
 import fs from 'fs';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { User } from '@prisma/client';
 import { 
   batchInsertQuestionsWithVectors, 
   generateEmbedding, 
   vectorToString, 
   executeVectorSQL 
 } from '@/lib/tidb-vector';
+
+
+
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -78,7 +83,7 @@ async function PDFDocumentsToQnA(pdf: string, filename: string): Promise<any> {
     // @ts-ignore - GPT-5-mini API format is correct according to OpenAI docs
     const response = await client.responses.parse({
       ...responsePayload,
-      max_output_tokens: 10000,
+      max_output_tokens: 15000,
     });
 
     const output = response.output_parsed
@@ -88,6 +93,11 @@ async function PDFDocumentsToQnA(pdf: string, filename: string): Promise<any> {
 export async function POST(request: NextRequest) {
   // use chat gpt 5 mini to convert documents and then input to database.
 
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
       const { file, filename } = await request.json();
   
@@ -96,7 +106,23 @@ export async function POST(request: NextRequest) {
   if (fileExtension !== 'pdf') {
     return NextResponse.json({ error: 'Unsupported file type. Please upload a PDF file.' }, { status: 400 });
   }
+  const user: User = await prisma.user.findUnique({
+    where: { email: session.user.email! },
+  }) as unknown as User;
 
+  //safe file before processing
+
+  const savedFile = await prisma.file.create({
+    data: {
+      userId: user.id, // You'll want to get this from auth session
+      name: filename,
+      size: Buffer.from(file, 'base64').length, // Set appropriate size if available
+      type: 'qsPaper', // or determine from filename/content
+      mimetype: 'application/pdf',
+      // content: can be added if you have the file buffer
+      content: Buffer.from(file, 'base64')
+    }
+  });
 
   const qna = await PDFDocumentsToQnA(file, filename);
   const qnaParsed = JSON.parse(JSON.stringify(qna));
@@ -115,16 +141,6 @@ export async function POST(request: NextRequest) {
 
   // Use our utility functions to store in TiDB with vectors
   // First, we need to create a File record to link questions to
-  const savedFile = await prisma.file.create({
-    data: {
-      userId: 'system', // You'll want to get this from auth session
-      name: filename,
-      size: 0, // Set appropriate size if available
-      type: 'qsPaper', // or determine from filename/content
-      mimetype: 'application/pdf',
-      // content: can be added if you have the file buffer
-    }
-  });
 
   // Use our batch insert utility to store all questions with vectors
   const insertResults = await batchInsertQuestionsWithVectors(

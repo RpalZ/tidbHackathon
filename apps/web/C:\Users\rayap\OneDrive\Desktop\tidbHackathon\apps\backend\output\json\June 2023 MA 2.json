@@ -1,0 +1,318 @@
+{
+  "QnAs": [
+    {
+      "questionNumber": "1",
+      "question": "A sphere of radius r is made from material of density ρM. The sphere is fully immersed in a liquid of density ρL. Which of the following expressions gives the upthrust on the sphere?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "Four multiple-choice expressions for upthrust on a sphere.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: 4πr^2 ρM",
+          "B: (4/3)πr^3 ρM g",
+          "C: (4/3)πr^3 ρL g",
+          "D: 4πr^2 ρL g"
+        ],
+        "answer": "C"
+      },
+      "pageNumber": 2,
+      "semanticSummary": "MCQ: upthrust on submerged sphere — selected C: (4/3)πr^3 ρL g."
+    },
+    {
+      "questionNumber": "2",
+      "question": "A source of light is viewed through a polarising filter. The filter is rotated through an angle and then viewed. Which row shows whether the light emitted by the source is polarised or unpolarised, and the angle of rotation of the filter?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "Photograph1: grey (some transmitted light); Photograph2: dark (no light).",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: polarised, π/2",
+          "B: polarised, π",
+          "C: unpolarised, π/2",
+          "D: unpolarised, π"
+        ],
+        "answer": "A"
+      },
+      "pageNumber": 3,
+      "semanticSummary": "MCQ: light is polarised and filter rotated by π/2 (selected A)."
+    },
+    {
+      "questionNumber": "3",
+      "question": "Two stars, P and Q, are observed from Earth. The intensity from P is less than from Q. The parallax angle for P is greater than for Q. Which row of the table is correct?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "Table with distance and luminosity comparisons for P and Q.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: P is closer than Q; luminosity of P is greater than Q",
+          "B: P is closer than Q; luminosity of P is less than Q",
+          "C: P is further away than Q; luminosity of P is greater than Q",
+          "D: P is further away than Q; luminosity of P is less than Q"
+        ],
+        "answer": "B"
+      },
+      "pageNumber": 3,
+      "semanticSummary": "MCQ: P has larger parallax so is closer; lower intensity implies lower luminosity — selected B."
+    },
+    {
+      "questionNumber": "4",
+      "question": "Two wires Y (area A, length l) and Z (area 2A, length 2l) of same material joined in series; Z fixed; force F applied to end of Y. Wire Y extends by x. Which is extension of wire Z?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "Diagram of two wires Y and Z joined in series with force F.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: 4x",
+          "B: 2x",
+          "C: x",
+          "D: x/2"
+        ],
+        "answer": "C"
+      },
+      "pageNumber": 4,
+      "semanticSummary": "MCQ: extension of Z equals x (selected C)."
+    },
+    {
+      "questionNumber": "5",
+      "question": "A raindrop is falling through the air with increasing velocity. Forces on raindrop are weight W, upthrust U and viscous drag F. Which shows the relationship between these forces?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "List of force relations.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: F + U = W",
+          "B: F = W + U",
+          "C: F + W < U",
+          "D: F + U < W"
+        ],
+        "answer": "D"
+      },
+      "pageNumber": 4,
+      "semanticSummary": "MCQ: while accelerating downward, W > F + U — selected D."
+    },
+    {
+      "questionNumber": "6",
+      "question": "Monochromatic light of wavelength λ incident normally on two slits S1 and S2 producing interference pattern. V, W, X, Y, Z are adjacent maxima. Which expression equals 2λ? (distance from S1 to X represented as S1X)",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "Two-slit diagram with labelled maxima positions V, W, X, Y, Z.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: S1Z − S2X",
+          "B: S1V − S2V",
+          "C: S1Y − S2Y",
+          "D: S1W − S2Y"
+        ],
+        "answer": "B"
+      },
+      "pageNumber": 5,
+      "semanticSummary": "MCQ: path difference S1V − S2V = 2λ — selected B."
+    },
+    {
+      "questionNumber": "7",
+      "question": "Carbon-14 decay constant λ = 1.2×10^−4 year^−1. Fossil contains 24% of original C-14. Which expression gives age of fossil in years?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "Multiple-choice of logarithmic expressions for radioactive decay age.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: 1.2×10^−4 × ln(1/0.24)",
+          "B: 1.2×10^−4 × ln(0.76/0.24)",
+          "C: (1 / 1.2×10^−4) × ln(1/0.24)",
+          "D: (1 / 1.2×10^−4) × ln(0.76/0.24)"
+        ],
+        "answer": "C"
+      },
+      "pageNumber": 6,
+      "semanticSummary": "MCQ: age t = (1/λ) ln(1/0.24) — selected C."
+    },
+    {
+      "questionNumber": "8",
+      "question": "A ray of light is directed towards a prism made from material with refractive index 1.5. Which dashed line best shows subsequent path of ray?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "Prism diagram with four possible emerging ray paths labelled A–D.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: path A",
+          "B: path B",
+          "C: path C",
+          "D: path D"
+        ],
+        "answer": "C"
+      },
+      "pageNumber": 6,
+      "semanticSummary": "MCQ: chosen path C (total internal reflection reasoning)."
+    },
+    {
+      "questionNumber": "9",
+      "question": "An object oscillates with simple harmonic motion. The object has kinetic energy Ek and displacement x. Which graph shows variation of Ek with x?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "Four possible Ek vs x graphs (parabolas and lines).",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: upward opening parabola with minimum at x=0",
+          "B: downward opening parabola with maximum at x=0",
+          "C: decreasing linear through origin",
+          "D: increasing linear through origin"
+        ],
+        "answer": "B"
+      },
+      "pageNumber": 7,
+      "semanticSummary": "MCQ: Ek max at x=0 so choose downward parabola B."
+    },
+    {
+      "questionNumber": "10",
+      "question": "A radioactivity monitoring badge uses photographic film behind an open window and a lead window. Film darkens with ionising radiation. Which represents film after exposure to beta radiation?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "Four small images showing different darkening patterns behind open and lead windows.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: dark region behind open window, light behind lead window (left tall dark, right small light)",
+          "B: opposite shading",
+          "C: uniform dark left only",
+          "D: uniform light right only"
+        ],
+        "answer": "A"
+      },
+      "pageNumber": 8,
+      "semanticSummary": "MCQ: beta reaches open window darkening film there, blocked by lead window — selected A."
+    },
+    {
+      "questionNumber": "11",
+      "question": "A standing wave forms on a cello string when the bow moves across the string. Deduce whether a thicker string will produce a note of higher or lower frequency compared with a thinner string, assuming same length and tension.",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": false,
+      "imageDescription": "Photograph of cello being played.",
+      "answer": {
+        "type": "text",
+        "answer": "Thicker string has greater mass per unit length μ. For same length and tension f ∝ 1/√μ, so a larger μ gives lower frequency. Therefore thicker string produces a lower frequency (lower pitch)."
+      },
+      "pageNumber": 9,
+      "semanticSummary": "Written: thicker string → larger μ → f ∝ 1/√μ → lower frequency."
+    },
+    {
+      "questionNumber": "12",
+      "question": "A metal block mass 220 g heated to 100°C then placed into 300 g water at 19°C in a glass container mass 50 g. Final water temperature 23°C. Deduce whether metal is copper or tin. (specific heats copper 390, tin 230 Jkg−1K−1; water 4200; glass 840)",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": false,
+      "imageDescription": "Table of specific heats and described calorimetry situation.",
+      "answer": {
+        "type": "text",
+        "answer": "Using energy lost by metal = energy gained by water + glass and solving gives an estimated specific heat capacity for the metal ≈ 307 J kg−1 K−1. This value is closer to copper; therefore the metal block was copper."
+      },
+      "pageNumber": 10,
+      "semanticSummary": "Written calorimetry: computed c_m ≈307 J/kgK and concluded metal is copper."
+    },
+    {
+      "questionNumber": "13",
+      "question": "A fusion research centre has a device testing materials in extreme conditions inside a fusion reactor. (a) Describe the extreme conditions. (b) Explain why fusion of nuclei can produce large amounts of energy referring to binding energy per nucleon graph.",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": false,
+      "imageDescription": "Graph of binding energy per nucleon vs nucleon number (peak around iron).",
+      "answer": {
+        "type": "text",
+        "answer": "(a) The interior is a high-temperature plasma and exists at very high temperatures and in a strong magnetic flux density (strong magnetic fields to confine plasma).\n(b) Fusion of small nuclei to form larger nuclei moves to higher binding energy per nucleon; the binding energy per nucleon increases, so energy is released. Example: nucleon number ~5 (~3 MeV/nucleon) to ~10 (~6 MeV/nucleon), so fusion releases significant energy per nucleon."
+      },
+      "pageNumber": 12,
+      "semanticSummary": "Describe fusion reactor: hot plasma and strong magnetic fields; fusion releases energy because binding energy per nucleon increases when small nuclei fuse."
+    },
+    {
+      "questionNumber": "14",
+      "question": "Fuel in a camping stove is butane stored partly liquid, partly gas. (a) When stove uses gas some liquid evaporates. Explain why canister temperature decreases. (b)(i) Pressure 220 kPa, temperature 21°C, canister cylinder length 0.23 m radius 0.11 m. Calculate number of molecules of butane (liquid negligible). (ii) Calculate r.m.s. speed of molecules (mass 9.6×10−26 kg).",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": false,
+      "imageDescription": "Photo of butane canister and camping stove; cylinder geometry given.",
+      "answer": {
+        "type": "text",
+        "answer": "(a) Evaporation removes the higher-energy (faster) molecules into the gas phase; the average kinetic energy of remaining liquid molecules decreases, so the liquid (and canister) cools.\n(b)(i) Using PV = NkT with V = πr^2 h, N ≈ 4.7×10^23 molecules.\n(ii) r.m.s. speed c_rms = sqrt(3kT/m) ≈ 3.6×10^2 m s−1 (≈360 m s−1)."
+      },
+      "pageNumber": 14,
+      "semanticSummary": "Explain evaporative cooling; computed N ≈4.7×10^23 and rms speed ≈360 m/s."
+    },
+    {
+      "questionNumber": "15",
+      "question": "James Webb Space Telescope observation: (a)(i) derive T = 1/H0 where T is age of universe; (ii) state one assumption; (iii) deduce whether observation leads to H0 within accepted range (60–80 km s−1 Mpc−1) given age ≈13×10^9 years. (b) Light from galaxy Maisie has redshift z=14. Observed wavelength 4.0×10−6 m. (i) calculate emitted wavelength. (ii) explain why it arrives as infrared. (c) Infrared detector work function 0.30 eV. Deduce whether detector can detect Maisie light.",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": false,
+      "imageDescription": "JWST image and redshift/wavelength data.",
+      "answer": {
+        "type": "text",
+        "answer": "(a)(i) For uniform expansion v = H0 d and v ≈ d / t ⇒ H0 = 1/t so t = 1/H0.\n(ii) Assumption: expansion rate has been uniform (unaccelerated/constant Hubble parameter over time).\n(iii) 13×10^9 years = 4.10×10^17 s ⇒ H0 = 1/T = 2.439×10^−18 s−1 ⇒ converting gives ≈75.6 km s−1 Mpc−1, which lies within the accepted range.\n(b)(i) Emitted wavelength λ_em = λ_obs/(1+z) = 4.0×10^−6 / (14+1) ≈ 2.67×10^−7 m.\n(ii) Due to cosmic expansion the original (shorter) wavelength has been stretched (redshifted) so the observed wavelength lies in the infrared.\n(c) Photon frequency f = c/λ ≈ 7.5×10^13 Hz; photon energy E = hf ≈ 4.97×10^−20 J ≈ 0.31 eV which slightly exceeds the work function 0.30 eV, so the detector can detect the light."
+      },
+      "pageNumber": 16,
+      "semanticSummary": "Derivation t=1/H0, assumed uniform expansion, computed H0≈75.6 km/s/Mpc within accepted range; emission λ≈2.7×10^−7 m, redshifted to IR; photon energy ≈0.31 eV >0.30 eV so detector can detect."
+    },
+    {
+      "questionNumber": "16",
+      "question": "Car suspension: car mass 1100 kg, each spring compressed by 152 mm due to a quarter of weight. (a) define 'within the elastic limit'. (b)(i) show stiffness of each spring ≈18000 N m−1. (ii) a small further compression leads to SHM; determine frequency. (c) state conditions for SHM. (d) explain why using oil of high viscosity produces heavy damping.",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": false,
+      "imageDescription": "Photo of car suspension and piston-in-oil damping sketch.",
+      "answer": {
+        "type": "text",
+        "answer": "(a) Within the elastic limit means the spring returns to its original length when the load is removed (no permanent deformation).\n(b)(i) k = (¼·1100·9.81)/0.152 ≈ 1.78×10^4 N m−1 ≈ 1.8×10^4 N m−1.\n(ii) For the oscillation using all four springs: f = (1/2π)√(4k/1100) ≈ 1.28 Hz.\n(c) Conditions: acceleration is proportional to displacement from equilibrium and directed towards the equilibrium (a ∝ −x).\n(d) High-viscosity oil produces a large resistive force on piston motion, so more work is dissipated into the oil per cycle and oscillation energy is rapidly removed → heavy damping."
+      },
+      "pageNumber": 18,
+      "semanticSummary": "Defined elastic limit; computed spring stiffness ≈1.8×10^4 N/m and oscillation frequency ≈1.28 Hz; SHM conditions; high-viscosity oil gives large resistive forces causing heavy damping."
+    },
+    {
+      "questionNumber": "17",
+      "question": "Scientists analyse starlight with a diffraction grating. (a) Explain pattern produced when a mixture of blue and red light from same source passes through a grating. (b)(i) Explain formation of dark lines in stellar spectrum. (ii) Sketch intensity vs wavelength for a star of surface temperature 5800 K. (iii) Explain why main sequence stars do not collapse due to gravity.",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": false,
+      "imageDescription": "Diffraction grating explanation, visible spectrum with labelled Fraunhofer lines, axes for intensity vs wavelength.",
+      "answer": {
+        "type": "text",
+        "answer": "(a) Light from the grating diffracts and waves from different slits superpose. Constructive interference occurs where path difference = nλ producing bright lines. Since nλ = d sinθ, larger λ gives larger sinθ and larger θ, so red light is spread more than blue; central maximum contains both colours (appears magenta). Thus series of red lines are further from centre than blue lines (blue maxima are closer).\n(b)(i) Atoms in the star's atmosphere have discrete energy levels. Photons with energy equal to the energy difference are absorbed, causing electrons to jump to higher levels. Those photons are removed from the line of sight (re-emitted in all directions), producing dark absorption lines at specific wavelengths.\n(ii) Sketch: a blackbody-like curve peaking at λ_max ≈ 0.50 μm (for T = 5800 K) with intensity rising to a peak near 0.5 μm then decreasing toward longer wavelengths.\n(iii) Main sequence stars have nuclear fusion in their cores releasing energy that produces outward radiation pressure which balances inward gravitational forces, preventing collapse."
+      },
+      "pageNumber": 21,
+      "semanticSummary": "Diffraction: constructive interference gives bright lines, red more spread than blue; dark lines due to atomic absorption; blackbody curve peak ≈0.5 μm; fusion pressure balances gravity in main-sequence stars."
+    },
+    {
+      "questionNumber": "18",
+      "question": "Galileo's telescope: (a) A converging lens produced an image at distance equal to focal length of the lens. What can be concluded about the object? (b) State what is meant by 'virtual' and 'upright'. (c) Image I produced by converging lens is at distance from diverging lens equal to focal length; draw ray diagram for diverging lens. (d) Galileo's telescope had magnification 10 and distance between lens centres 90 cm. Calculate focal length of each lens. (e) Ganymede orbit: distance 1.07×10^6 km from Jupiter centre, period 171 hours. Calculate mass of Jupiter.",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": false,
+      "imageDescription": "Historical telescope image and optical diagrams; orbital data for Ganymede.",
+      "answer": {
+        "type": "text",
+        "answer": "(a) If the converging lens produces an image at its focal length, the incoming rays are effectively parallel, so the object is very far away (at infinity).\n(b) Virtual: real rays do not actually pass through the image position (image formed by apparent intersection). Upright: image has same orientation as the object (not inverted).\n(c) Ray diagram: principal rays drawn — a ray parallel to axis refracts as if from focal point, a ray directed toward lens centre passes undeviated; emerging rays diverge and appear to originate from a point on the same side as the object (diagram drawn accordingly).\n(d) With magnification m = f_c / f_d = 10 and lens separation = 90 cm ≈ f_c + f_d ⇒ solving gives f_d = 10 cm and f_c = 100 cm.\n(e) Using orbital relation GM = 4π^2 r^3 / T^2 with r = 1.07×10^9 m and T = 171 h = 615,600 s gives M_Jupiter ≈ 1.91×10^27 kg."
+      },
+      "pageNumber": 24,
+      "semanticSummary": "Object at infinity if image at focal length; definitions of virtual and upright; ray diagram for diverging lens; focal lengths f_c=100 cm, f_d=10 cm; Jupiter mass ≈1.91×10^27 kg."
+    }
+  ],
+  "lastParentQsProcessed": "18",
+  "totalPages": 32
+}

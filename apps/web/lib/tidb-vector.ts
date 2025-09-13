@@ -167,7 +167,7 @@ export async function insertQuestionWithVector(
     // Step 3: Update with vector embedding using raw SQL
     await executeVectorSQL(`
       UPDATE Questions 
-      SET vector_embedding = ?
+      SET vectorEmbedding = ?
       WHERE id = ?
     `, [vectorString, question.id])
 
@@ -230,12 +230,12 @@ export async function searchSimilarQuestions(
         type,
         semanticSummary,
         pageNumber,
-        vec_cosine_distance(vector_embedding, ?) as distance,
-        (1 - vec_cosine_distance(vector_embedding, ?)) as similarity
+        vec_cosine_distance(vectorEmbedding, ?) as distance,
+        (1 - vec_cosine_distance(vectorEmbedding, ?)) as similarity
       FROM Questions
-      WHERE vector_embedding IS NOT NULL
+      WHERE vectorEmbedding IS NOT NULL
         ${fileFilter}
-        AND (1 - vec_cosine_distance(vector_embedding, ?)) >= ?
+        AND (1 - vec_cosine_distance(vectorEmbedding, ?)) >= ?
       ORDER BY distance ASC
       LIMIT ?
     `
@@ -337,35 +337,35 @@ export async function setupTiDBVectorColumns(): Promise<{ success: boolean; mess
     // Step 1: Drop existing TEXT columns and recreate as VECTOR
     await executeVectorSQL(`
       ALTER TABLE Questions 
-      DROP COLUMN IF EXISTS vector_embedding
+      DROP COLUMN IF EXISTS vectorEmbedding
     `)
 
     await executeVectorSQL(`
       ALTER TABLE File 
-      DROP COLUMN IF EXISTS vector_embedding
+      DROP COLUMN IF EXISTS vectorEmbedding
     `)
 
     // Step 2: Add proper VECTOR columns (1536 dimensions for text-embedding-3-small)
     await executeVectorSQL(`
       ALTER TABLE Questions 
-      ADD COLUMN vector_embedding VECTOR(1536)
+      ADD COLUMN vectorEmbedding VECTOR(1536)
     `)
 
     await executeVectorSQL(`
       ALTER TABLE File 
-      ADD COLUMN vector_embedding VECTOR(1536)
+      ADD COLUMN vectorEmbedding VECTOR(1536)
     `)
 
     // Step 3: Create vector search indexes for optimal performance
     await executeVectorSQL(`
       CREATE INDEX IF NOT EXISTS idx_questions_vector 
-      ON Questions USING VECTOR(vector_embedding) 
+      ON Questions USING VECTOR(vectorEmbedding) 
       WITH (distance_metric = 'cosine')
     `)
 
     await executeVectorSQL(`
       CREATE INDEX IF NOT EXISTS idx_file_vector 
-      ON File USING VECTOR(vector_embedding) 
+      ON File USING VECTOR(vectorEmbedding) 
       WITH (distance_metric = 'cosine')
     `)
 

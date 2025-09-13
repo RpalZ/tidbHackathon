@@ -1,0 +1,318 @@
+{
+  "QnAs": [
+    {
+      "questionNumber": "1",
+      "question": "One isotope of oxygen is 17/8 O. Which row of the table shows the number of neutrons and the number of protons in a nucleus of 17/8 O?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "Table with options A-D listing number of neutrons and protons.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: 8 neutrons, 9 protons",
+          "B: 8 neutrons, 17 protons",
+          "C: 9 neutrons, 8 protons",
+          "D: 17 neutrons, 8 protons"
+        ],
+        "answer": "C"
+      },
+      "pageNumber": 2,
+      "semanticSummary": "MCQ: Oxygen-17 has 9 neutrons and 8 protons — answer C."
+    },
+    {
+      "questionNumber": "2",
+      "question": "A subatomic particle consists of the quark combination u s̄. Which of the following is the classification for this particle?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "MCQ choices: baryon, lepton, meson, nucleon.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: baryon",
+          "B: lepton",
+          "C: meson",
+          "D: nucleon"
+        ],
+        "answer": "C"
+      },
+      "pageNumber": 2,
+      "semanticSummary": "MCQ: u s̄ is a quark-antiquark pair (meson) — answer C."
+    },
+    {
+      "questionNumber": "3",
+      "question": "A charged capacitor is discharged through a resistor. The potential difference across the capacitor halved in a time t. The time constant is T. Which of the following is the equation for t?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "MCQ choices of expressions for t in terms of T and ln2.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: t = ln 2 / T",
+          "B: t = ln 1 / 2T",
+          "C: t = T ln 1/2",
+          "D: t = T ln 2"
+        ],
+        "answer": "D"
+      },
+      "pageNumber": 2,
+      "semanticSummary": "MCQ: Time to halve is t = T ln 2 — answer D."
+    },
+    {
+      "questionNumber": "4",
+      "question": "Muons created in the upper atmosphere can travel towards the Earth's surface at speeds close to the speed of light. Changes to the mass and average lifetime of the muons can then be observed. Which row of the table describes these changes when muons travel at speeds close to the speed of light?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "Table with options showing increase/decrease of mass and average lifetime.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: mass increases, average lifetime increases",
+          "B: mass increases, average lifetime decreases",
+          "C: mass decreases, average lifetime increases",
+          "D: mass decreases, average lifetime decreases"
+        ],
+        "answer": "A"
+      },
+      "pageNumber": 3,
+      "semanticSummary": "MCQ: Relativistic muons have increased mass and dilated lifetime — answer A."
+    },
+    {
+      "questionNumber": "5",
+      "question": "A model racing car moves round a track with constant speed and reaches point P and then slides off at P. Why does the car slide off the track?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "Plan view of track with directions North and South and point P on outer edge.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: The centripetal force is acting in the N direction.",
+          "B: The centripetal force is acting in the S direction.",
+          "C: The frictional force is equal to the centripetal force.",
+          "D: The frictional force is not large enough."
+        ],
+        "answer": "D"
+      },
+      "pageNumber": 3,
+      "semanticSummary": "MCQ: Car slides because frictional force is not large enough to provide required centripetal force — answer D."
+    },
+    {
+      "questionNumber": "6",
+      "question": "In a boiler, energy is transferred to water at a rate of 40 kW. Power loss to surroundings is 4.0 kW. Which of the following is the efficiency of the boiler?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "MCQ choices: 0.10, 0.11, 0.90, 0.91.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: 0.10",
+          "B: 0.11",
+          "C: 0.90",
+          "D: 0.91"
+        ],
+        "answer": "D"
+      },
+      "pageNumber": 4,
+      "semanticSummary": "MCQ: Efficiency = 40/(40+4)=0.909 ≈ 0.91 — answer D."
+    },
+    {
+      "questionNumber": "7",
+      "question": "A car is fitted with an airbag which inflates if the car stops very suddenly. Which of the following is increased if the airbag inflates because the car suddenly stops?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "MCQ options: change in momentum, change in velocity, force on driver, time to stop.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: change in momentum of the driver",
+          "B: change in velocity of the driver",
+          "C: force on the driver",
+          "D: time that the driver takes to stop"
+        ],
+        "answer": "D"
+      },
+      "pageNumber": 4,
+      "semanticSummary": "MCQ: Airbag increases stopping time (reduces force) — answer D."
+    },
+    {
+      "questionNumber": "8",
+      "question": "Alpha particle scattering: The path shows α particle deflected by nucleus; closest approach at P. Which row describes the speed and potential energy of the α particle at point P?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "Diagram of α particle path near nucleus; table options for speed and potential energy at P.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: speed greatest, potential energy greatest",
+          "B: speed greatest, potential energy least",
+          "C: speed least, potential energy greatest",
+          "D: speed least, potential energy least"
+        ],
+        "answer": "C"
+      },
+      "pageNumber": 5,
+      "semanticSummary": "MCQ: At closest approach kinetic energy minimum (speed least) and potential energy greatest — answer C."
+    },
+    {
+      "questionNumber": "9",
+      "question": "Which of the following can be concluded about a gold atom from the deflection of this α particle?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "MCQ choices about atom containing electrons, zero charge, small nucleus, positively charged nucleus.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: The atom contains electrons.",
+          "B: The atom has zero charge.",
+          "C: The nucleus is very small compared to the atom.",
+          "D: The nucleus of the atom is positively charged."
+        ],
+        "answer": "D"
+      },
+      "pageNumber": 5,
+      "semanticSummary": "MCQ: Large-angle deflection shows nucleus is positively charged — answer D."
+    },
+    {
+      "questionNumber": "10",
+      "question": "An object moves from rest. Graph shows acceleration a varying linearly with time (increasing). Which graph best shows how velocity v varies with t over same interval?",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": true,
+      "imageDescription": "Four candidate v vs t graphs: straight line, convex upward curve, saturating curve, constant line.",
+      "answer": {
+        "type": "mcq",
+        "choices": [
+          "A: straight line (linear increase)",
+          "B: convex upward curve (increasing slope)",
+          "C: leveling off curve",
+          "D: constant velocity"
+        ],
+        "answer": "B"
+      },
+      "pageNumber": 6,
+      "semanticSummary": "MCQ: With increasing acceleration, velocity is concave-up (increasing slope) — answer B."
+    },
+    {
+      "questionNumber": "11",
+      "question": "An induction hob consists of a coil beneath a sheet of ceramic material. (a) Explain why a steel pan containing water placed on the induction hob becomes hot when supply is switched on. (b) The a.c. supply to the coil has a much higher frequency than mains. Explain why this is an advantage.",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": false,
+      "imageDescription": "Diagram of pan over ceramic sheet with coil beneath.",
+      "answer": {
+        "type": "text",
+        "answer": "(a) Alternating current in coil produces a changing magnetic flux through the steel pan, inducing eddy currents in the steel; resistive heating from these currents (Joule heating) warms the pan and contents. (b) Higher frequency means the magnetic field changes more rapidly, inducing larger eddy currents (greater heating) and more efficient heating of the pan."
+      },
+      "pageNumber": 7,
+      "semanticSummary": "Explain induction heating: changing B induces eddy currents in steel pan causing heating; higher frequency increases induced current and heating."
+    },
+    {
+      "questionNumber": "12",
+      "question": "An electrical conductor XY carries a current I. The current density j is defined as j = I/A where A is the cross-sectional area. (a) Current density is a vector quantity. State what is meant by a vector quantity. (b) I is constant but A decreases towards end Y. Explain how this affects the drift velocity of the free electrons. (c) The resistivity ρ of the conducting material is given by ρ = E/j where E is the electric field strength. Show that the units are the same on both sides of this equation.",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": false,
+      "imageDescription": "Simple conductor diagram X→Y with current arrow.",
+      "answer": {
+        "type": "text",
+        "answer": "(a) A vector quantity has both magnitude and direction. (b) From I = nqvA, with I, n and q constant and A decreasing, drift velocity v must increase (v ∝ 1/A). (c) Units: E has units V m⁻¹ and j has units A m⁻², so E/j has units V m⁻¹ / (A m⁻²) = V A⁻¹ m, which equals Ω m, same units as resistivity."
+      },
+      "pageNumber": 8,
+      "semanticSummary": "Definitions/explanations: vector = magnitude+direction; decreasing area increases drift speed; unit check shows ρ units Ω·m."
+    },
+    {
+      "questionNumber": "13",
+      "question": "The circuit shown provides an input to a transistor via a 333 Ω resistor and an LDR whose resistance varies with light level. The transistor switches on when input PD > 0.7 V. This should happen as light level increases above 30 lux. (a) Deduce whether this circuit responds as required. (b) Explain how the resistance of the LDR changes as the light level increases.",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": false,
+      "imageDescription": "Circuit with 7.0 V supply, LDR and 333 Ω resistor; log-log graph of LDR resistance vs light level indicating ~3000 Ω at 30 lux.",
+      "answer": {
+        "type": "text",
+        "answer": "(a) Yes. At 30 lux R_LDR ≈ 3000 Ω so voltage across the 333 Ω resistor is V_R = 7.0×(333/(3000+333)) ≈ 0.699 ≈ 0.70 V, so the transistor will switch on for light >30 lux. (b) As light level increases the LDR resistance decreases (more charge carriers produced, lower resistance)."
+      },
+      "pageNumber": 10,
+      "semanticSummary": "Circuit responds as required: at 30 lux VR≈0.70 V so transistor switches on; LDR resistance decreases with increasing light."
+    },
+    {
+      "questionNumber": "14",
+      "question": "Overhead electricity cables are supported by rods X and Y. An electric cable mass 45 kg is suspended from X; support rod Y attached to X. Geometry: horizontal from column to rod X 1.3 m, support rod Y length 1.5 m at 35° downward to cable. (a)(i) Determine by taking moments the force exerted on rod X by rod Y. (ii) Complete free-body diagram for support rod X. (b) A website gives E at two distances: 3 m → 1200 N C⁻¹; 25 m → 100 N C⁻¹. Deduce whether these data are consistent with an inverse square law.",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": false,
+      "imageDescription": "Diagram of column, support rods, cable weight mg, distances and angle.",
+      "answer": {
+        "type": "text",
+        "answer": "(a)(i) Taking moments about the column: F·sin35°·1.3 = (45·9.81)·1.5 ⇒ F ≈ 8.90×10^2 N (reported 890 N). (ii) Free-body: weight of cable downward, force from column roughly horizontal to the right, force from rod Y acting up-left at 35°. (b) For inverse-square E·r^2 should be constant: 1200·3^2 = 10800, 100·25^2 = 62500 so not constant ⇒ data are not consistent with inverse square law."
+      },
+      "pageNumber": 12,
+      "semanticSummary": "Moments give force from Y ≈ 890 N; FBD completed; provided E data are inconsistent with 1/r^2 (k not constant)."
+    },
+    {
+      "questionNumber": "15",
+      "question": "A delta particle decays into a proton and a pion. (a)(i) State why it can be concluded the delta particle is neutral. (ii) Deduce the charge on the pion. (iii) Complete the particle equation for Δ0 decay. (iv) State why delta must be classified as a baryon. (v) Explain how the momentum of the proton compares with the momentum of the pion. (b)(i) mass of delta is 1232 MeV/c^2. Calculate mass in kg. (ii) The masses of proton 939 MeV/c^2 and pion 139 MeV/c^2. Explain why sum of masses after decay is not equal to mass of delta.",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": false,
+      "imageDescription": "Detector tracks showing two charged tracks labelled pion and proton.",
+      "answer": {
+        "type": "text",
+        "answer": "(a)(i) The delta leaves no track, so it is neutral. (ii) The pion is negatively charged (track curves opposite to the proton). (iii) Δ0 → p+ + π−. (iv) Baryon number conserved: RHS has baryon number 1 (proton), so Δ0 has baryon number 1 and is a baryon. (v) Proton momentum is larger than pion momentum (in same magnetic field radius ∝ p, proton path radius is larger so p_proton > p_pion). (b)(i) m = E/c^2 = 1232×10^6 eV ×1.60×10^-19 J/eV / (9.00×10^16) ≈ 2.19×10^-27 kg (reported 2.19×10^-27 kg). (ii) Masses of products (939+139=1078 MeV/c^2) < 1232 MeV/c^2; the missing mass is converted into kinetic energy of the decay products."
+      },
+      "pageNumber": 14,
+      "semanticSummary": "Delta neutral; decays Δ0 → p+ + π−; pion negative; Δ is baryon; proton has larger momentum; mass 2.19×10^-27 kg; extra mass becomes kinetic energy."
+    },
+    {
+      "questionNumber": "16",
+      "question": "Electric vehicles use a d.c. motor. Diagram of coil ABCD, split ring commutator and brushes. (a) Describe how arrangement leads to coil rotating. (b) Motor spec: up to 390 kW, car to 28 m/s from rest in 4.0 s. Calculate work done by resistive forces during this acceleration (mass=1950 kg). (c) Explain why increase in internal resistance of a battery is a disadvantage.",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": false,
+      "imageDescription": "Schematic of simple d.c. motor with coil, split ring, brushes and magnetic poles.",
+      "answer": {
+        "type": "text",
+        "answer": "(a) Current flows in the coil so sides experience forces in opposite directions due to the magnetic field (F = BIL), producing a torque about the axis; after half a turn the split-ring commutator reverses the connection so the current direction in the coil reverses and the torque continues to rotate the coil in the same direction. (b) Student answer: Work done by resistive forces = 8.0×10^5 J. (c) Increased internal resistance reduces terminal pd and therefore the current available to the motor, reducing acceleration and useful power."
+      },
+      "pageNumber": 16,
+      "semanticSummary": "Explain motor torque and commutation; student computed resistive-work ≈ 8.0×10^5 J; increased internal resistance reduces terminal voltage/current and performance."
+    },
+    {
+      "questionNumber": "17",
+      "question": "Cricket fielder at boundary 55.0 m from batter. Fielder can catch if ball is less than 3 m above original height. Ball hit with speed 23.8 m/s at 50.0°. (a) Deduce whether fielder can catch. (b)(i) Show magnitude of momentum after hit ~3.3 Ns (m=0.140 kg). (ii) Using vector diagram of momenta (bat and ball before), determine momentum of bat after it hit the ball.",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": false,
+      "imageDescription": "Trajectory diagram showing initial speed/angle and distance to fielder; vector diagram for momenta of bat and ball and bat before.",
+      "answer": {
+        "type": "text",
+        "answer": "(a) Horizontal motion: time to reach boundary t = 55.0/(23.8 cos50°) ≈ 3.515 s. Vertical: y = (23.8 sin50°)·3.515 − 0.5·9.81·3.515^2 ≈ 2.15 m < 3 m, so the fielder can catch. (b)(i) p = mv = 0.140×23.8 ≈ 3.33 ≈ 3.3 Ns. (ii) From the scale vector construction student found momentum of bat after = 8.3 kg m s^-1 at ≈ 34° to the horizontal."
+      },
+      "pageNumber": 18,
+      "semanticSummary": "Projectile height at 55 m is ≈2.15 m so fielder can catch; ball momentum ≈3.3 Ns; bat momentum after ≈8.3 Ns at ~34°."
+    },
+    {
+      "questionNumber": "18",
+      "question": "Circuit shows a 1 mF capacitor connected to an a.c. supply. Graph shows V vs t with amplitude 5 V and period 0.02 s. (a)(i) Calculate rms potential difference. (ii) Explain why V = 5 sin(100π t) leads to graph. (b) Spreadsheet models current I in capacitor vs t; six rows provided. (i) Explain how cell E10 was calculated. (ii) State formula used to calculate cell G11. (iii) Calculate maximum energy stored on capacitor. (c) Using I vs t and V vs t graphs, deduce whether capacitor dissipates power over one cycle of a.c. supply.",
+      "type": "main",
+      "parentQuestionNumber": "",
+      "isMultipleChoice": false,
+      "imageDescription": "Circuit with capacitor, V vs t plot, spreadsheet rows for t, Δt, V, Qinitial, Qfinal, ΔQ, I and dashed I vs t plotted with V vs t.",
+      "answer": {
+        "type": "text",
+        "answer": "(a)(i) V_rms = V0/√2 = 5/√2 ≈ 3.54 V (student wrote 3.5 V). (ii) V = 5 sin(100π t) has amplitude 5 V so y-scale matches ±5, and angular frequency ω = 100π gives period T = 2π/ω = 0.02 s matching the plotted period. (b)(i) E10 computed by Q = CV using C = 1.0×10^-3 F and V (cell C10) = 2.94 V, so E10 = 1.0×10^-3 × 2.94 = 0.00294 C. (ii) G11 formula: I = ΔQ / Δt. (iii) Maximum energy W_max = 1/2 C V0^2 = 0.5×1.0×10^-3×5.00^2 = 0.0125 J (student wrote 0.0125 J). (c) The capacitor does not dissipate net energy over one cycle — the instantaneous power alternates positive and negative and the net energy dissipated over a full cycle is zero."
+      },
+      "pageNumber": 20,
+      "semanticSummary": "Vrms ≈3.54 V; sine form explains amplitude and period; E10 = C·V = 0.00294 C; I = ΔQ/Δt; W_max = 0.0125 J; net dissipated energy per cycle = 0."
+    }
+  ],
+  "lastParentQsProcessed": "18",
+  "totalPages": 22
+}
