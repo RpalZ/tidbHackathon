@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { file, filename } = await request.json();
+    const { file, filename, sessionId } = await request.json();
   
     const fileExtension = filename.split('.').pop()?.toLowerCase();
 
@@ -84,6 +84,20 @@ export async function POST(request: NextRequest) {
       where: { email: session.user.email! },
     }) as unknown as User;
 
+    // Verify that the session belongs to this user (if sessionId is provided)
+    if (sessionId) {
+      const processorSession = await prisma.processorSession.findFirst({
+        where: {
+          id: sessionId,
+          userId: user.id
+        }
+      });
+
+      if (!processorSession) {
+        return NextResponse.json({ error: 'Session not found or unauthorized' }, { status: 404 });
+      }
+    }
+
     // Save file before processing with markScheme type
     const savedFile = await prisma.file.create({
       data: {
@@ -92,7 +106,8 @@ export async function POST(request: NextRequest) {
         size: Buffer.from(file, 'base64').length,
         type: 'markScheme', // Distinguish from question papers
         mimetype: 'application/pdf',
-        content: Buffer.from(file, 'base64')
+        content: Buffer.from(file, 'base64'),
+        processorSessionId: sessionId || null // Associate with session if provided
       }
     });
 

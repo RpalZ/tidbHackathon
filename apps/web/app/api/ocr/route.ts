@@ -36,21 +36,21 @@ async function PDFDocumentsToQnA(pdf: string, filename: string): Promise<any> {
 
   const textAnswer = z.object({
     type: z.literal("text"),
-    answer: z.string().describe("The text answer provided for the question").nullable(),
+    answer: z.string().describe("The text answer provided for the question. DO NOT INCLUDE QUESTION NUMBERS BEFORE THE ANSWER").nullable(),
   })
 
   const mcqAnswer = z.object({
     type: z.literal("mcq"),
-    choices: z.array(z.string()).describe("The list of choices available for the multiple-choice question including text of each choice"),
+    choices: z.array(z.string()).describe("The list of choices available for the multiple-choice question including text of each choice. PUT IN ORDER OF A, B, C, D AND ETC. EXAMPLE: A: {TEXT OF CHOICE}").nullable(),
     answer: z.string().describe("The choice that is selected").nullable(),
   })
   const answerSchema = z.union([textAnswer, mcqAnswer]).nullable();
 
   const questionAndAnswerSchema = z.object({
-    questionNumber: z.string().describe("The unique identifier for the question, such as '1', '2(a)', '3b(i)', etc."),
+    questionNumber: z.string().describe("The unique identifier for the question, such as '1', '2(a)', '3b(i)', etc. Can only have one of these per question. IMPORTANT"),
     question: z.string().describe("The text of the actual question"),
-    type: z.enum(["main","subquestion","subpart"]).describe("main could be 1,2,3 etc. subquestion could be 1(a),1(b),2(a),2(b) etc. subpart could be 1(a)(i), 1(a)(ii), 1(b)(i), 1(b)(ii) etc."),
-    parentQuestionNumber: z.string().nullable().describe("It can be 1,2,3 etc. for subquestions and subparts it can be 1(a),1(b),2(a),2(b) etc."),
+    type: z.enum(["main","subquestion","subpart"]).describe("main = 1,2,3 etc. subquestion = 1(a),1(b),2(a),2(b) etc. subpart = 1(a)(i), 1(a)(ii), 1(b)(i), 1(b)(ii) etc. IMPORTANT"),
+    parentQuestionNumber: z.string().nullable().describe("the parent question number like 1, 2, 3 etc if the question is a child of it. ONLY INCLUDE THE INTEGER PARENT NUMBER LIKE 1, 2 ... ETC AND NOT 1(a) etc. IMPORTANT"),
     isMultipleChoice: z.boolean().default(false),
     imageDescription: z.string().nullable().describe("A brief description of any images associated with the question, if applicable. Be sure it is detailed enough to be useful to someone who cannot see the image."),
     answer: answerSchema,
@@ -72,7 +72,7 @@ async function PDFDocumentsToQnA(pdf: string, filename: string): Promise<any> {
     input: [
       { role: "system", content: "You are a helpful assistant that extracts structured data from educational documents. You will be provided with a document. Your task is to analyze the content of the document and extract all relevant questions and answers, including multiple-choice questions, true/false questions, and written answer questions. The extracted data should be structured in a JSON format according to the provided schema. Imagine yourself as an intelligent OCR." },
       { role: "user", content: [
-        {type: "input_text", text: `Extract the questions and answers from pdf provided in order using the schema provided`},
+        {type: "input_text", text: `Extract the questions and answers from pdf provided in order using the schema provided. Mathematical expressions will be displayed as LaTeX syntax`},
         {type: "input_file", file_data: pdf, filename}
       ]}
     ],
@@ -83,7 +83,7 @@ async function PDFDocumentsToQnA(pdf: string, filename: string): Promise<any> {
     // @ts-ignore - GPT-5-mini API format is correct according to OpenAI docs
     const response = await client.responses.parse({
       ...responsePayload,
-      max_output_tokens: 15000,
+      max_output_tokens: 30000,
     });
 
     const output = response.output_parsed
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-      const { file, filename } = await request.json();
+      const { file, filename, sessionId } = await request.json();
   
   const fileExtension = filename.split('.').pop()?.toLowerCase();
 
@@ -109,6 +109,20 @@ export async function POST(request: NextRequest) {
   const user: User = await prisma.user.findUnique({
     where: { email: session.user.email! },
   }) as unknown as User;
+
+  // Verify that the session belongs to this user (if sessionId is provided)
+  if (sessionId) {
+    const processorSession = await prisma.processorSession.findFirst({
+      where: {
+        id: sessionId,
+        userId: user.id
+      }
+    });
+
+    if (!processorSession) {
+      return NextResponse.json({ error: 'Session not found or unauthorized' }, { status: 404 });
+    }
+  }
 
   //safe file before processing
 
@@ -120,7 +134,8 @@ export async function POST(request: NextRequest) {
       type: 'qsPaper', // or determine from filename/content
       mimetype: 'application/pdf',
       // content: can be added if you have the file buffer
-      content: Buffer.from(file, 'base64')
+      content: Buffer.from(file, 'base64'),
+      processorSessionId: sessionId || null // Associate with session if provided
     }
   });
 

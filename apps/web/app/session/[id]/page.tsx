@@ -170,66 +170,6 @@ export default function SessionPage() {
 
   // Load session data
   useEffect(() => {
-    const loadSessionData = async () => {
-      try {
-        setLoading(true)
-        
-        // Load real session data from database
-        const response = await fetch(`/api/sessions/${sessionId}`)
-        if (!response.ok) {
-          throw new Error('Failed to load session data')
-        }
-        
-        const sessionData = await response.json()
-        
-        // Convert date strings back to Date objects
-        const processedSessionData = {
-          ...sessionData,
-          createdAt: new Date(sessionData.createdAt),
-          papers: sessionData.papers.map((paper: any) => ({
-            ...paper,
-            uploadedAt: new Date(paper.uploadedAt)
-          }))
-        }
-        
-        setSessionData(processedSessionData)
-        
-        // Load questions for the selected paper
-        if (sessionData.papers.length > 0) {
-          const questionPapers = sessionData.papers.filter((p: any) => p.documentType === 'qsPaper')
-          if (questionPapers.length > 0) {
-            setSelectedPaper(questionPapers[0])
-            setActiveTab(questionPapers[0].id)
-            await loadQuestionsForPaper(questionPapers[0].id)
-          }
-        }
-        
-        setError(null)
-      } catch (err) {
-        setError('Failed to load session data')
-        console.error('Error loading session:', err)
-        
-        // Fallback: Create empty session if none exists
-        const fallbackSession: SessionData = {
-          id: sessionId,
-          name: `Session ${sessionId.slice(-8)}`,
-          examBoard: 'Edexcel',
-          subject: 'Physics',
-          year: 2024,
-          createdAt: new Date(),
-          status: 'draft',
-          totalQuestions: 0,
-          solvedQuestions: 0,
-          avgAccuracy: 0,
-          totalProcessingTime: '0s',
-          papers: []
-        }
-        setSessionData(fallbackSession)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     if (sessionId) {
       loadSessionData()
     }
@@ -241,11 +181,21 @@ export default function SessionPage() {
       const response = await fetch(`/api/questions?fileId=${paperId}`)
       if (response.ok) {
         const questionsData = await response.json()
-        setQuestions(questionsData.questions || [])
+        const loadedQuestions = questionsData.questions || []
+        setQuestions(loadedQuestions)
+        
+        // Automatically collapse all main questions on load
+        const mainQuestionNumbers = new Set<string>(
+          loadedQuestions
+            .filter((q: Question) => q.type === 'main')
+            .map((q: Question) => q.questionNumber)
+        )
+        setCollapsedMainQuestions(mainQuestionNumbers)
       }
     } catch (error) {
       console.error('Error loading questions:', error)
       setQuestions([])
+      setCollapsedMainQuestions(new Set()) // Reset collapsed state on error
     }
   }
 
@@ -500,7 +450,8 @@ export default function SessionPage() {
         },
         body: JSON.stringify({
           file: base64,
-          filename: file.name
+          filename: file.name,
+          sessionId: sessionId // Include sessionId so file gets associated with this session
         })
       })
       
@@ -515,7 +466,7 @@ export default function SessionPage() {
       if (documentType === 'markScheme') {
         if (result.markSchemeData) {
           console.log(`✅ Processed ${result.markSchemeData.markSchemes.length} mark scheme entries`)
-          console.log(`� Linked ${result.linkingResults.linked} to existing questions`)
+          console.log(`🔗 Linked ${result.linkingResults.linked} to existing questions`)
         }
       } else {
         if (result.qna?.QnAs) {
@@ -523,31 +474,74 @@ export default function SessionPage() {
         }
       }
       
-      const newPaper: ExamPaper = {
-        id: `paper-${Date.now()}`,
-        filename: file.name,
-        examBoard: 'Edexcel',
-        subject: 'Physics',
-        year: 2024,
-        status: 'processing',
-        uploadedAt: new Date(),
-        totalQuestions: documentType === 'markScheme' 
-          ? (result.markSchemeData?.markSchemes?.length || 0)
-          : (result.qna?.QnAs?.length || 0),
-        solvedQuestions: 0,
-        documentType: documentType
-      }
+      // Reload session data to get the actual file data from the database
+      await loadSessionData()
       
-      if (sessionData) {
-        setSessionData(prev => prev ? {
-          ...prev,
-          papers: [...prev.papers, newPaper]
-        } : null)
-      }
     } catch (err) {
       console.error('Upload failed:', err)
     } finally {
       setUploadingPaper(false)
+    }
+  }
+
+  // Load session data function (extracted for reuse)
+  const loadSessionData = async () => {
+    try {
+      setLoading(true)
+      
+      // Load real session data from database
+      const response = await fetch(`/api/sessions/${sessionId}`)
+      if (!response.ok) {
+        throw new Error('Failed to load session data')
+      }
+      
+      const sessionData = await response.json()
+      
+      // Convert date strings back to Date objects
+      const processedSessionData = {
+        ...sessionData,
+        createdAt: new Date(sessionData.createdAt),
+        papers: sessionData.papers.map((paper: any) => ({
+          ...paper,
+          uploadedAt: new Date(paper.uploadedAt)
+        }))
+      }
+      
+      setSessionData(processedSessionData)
+      
+      // Load questions for the selected paper
+      if (sessionData.papers.length > 0) {
+        const questionPapers = sessionData.papers.filter((p: any) => p.documentType === 'qsPaper')
+        if (questionPapers.length > 0) {
+          setSelectedPaper(questionPapers[0])
+          setActiveTab(questionPapers[0].id)
+          await loadQuestionsForPaper(questionPapers[0].id)
+        }
+      }
+      
+      setError(null)
+    } catch (err) {
+      setError('Failed to load session data')
+      console.error('Error loading session:', err)
+      
+      // Fallback: Create empty session if none exists
+      const fallbackSession: SessionData = {
+        id: sessionId,
+        name: `Session ${sessionId.slice(-8)}`,
+        examBoard: 'Edexcel',
+        subject: 'Physics',
+        year: 2024,
+        createdAt: new Date(),
+        status: 'draft',
+        totalQuestions: 0,
+        solvedQuestions: 0,
+        avgAccuracy: 0,
+        totalProcessingTime: '0s',
+        papers: []
+      }
+      setSessionData(fallbackSession)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -804,9 +798,9 @@ export default function SessionPage() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Column - Documents Management */}
-        <div className="lg:col-span-1 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-100px)]">
+        {/* Left Column - Documents Management + Session Overview */}
+        <div className="lg:col-span-1 space-y-6 overflow-y-auto top-6 h-[calc(100vh-100px)]">
           {/* Upload New Paper */}
           <Card>
             <CardHeader>
@@ -1023,10 +1017,111 @@ export default function SessionPage() {
             </CardContent>
           </Card>
 
+          {/* Session Overview */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Session Overview</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">Papers</span>
+                </div>
+                <span className="font-medium">{sessionData.papers.length}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Activity className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">Total Questions</span>
+                </div>
+                <span className="font-medium">{sessionData.totalQuestions}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">Solved</span>
+                </div>
+                <span className="font-medium">{sessionData.solvedQuestions}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Target className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">Avg Accuracy</span>
+                </div>
+                <span className="font-medium">{sessionData.avgAccuracy}%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">Processing Time</span>
+                </div>
+                <span className="font-medium">{sessionData.totalProcessingTime}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Progress */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Progress</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Questions Solved</span>
+                    <span>{sessionData.solvedQuestions}/{sessionData.totalQuestions}</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div 
+                      className="bg-primary h-2 rounded-full transition-all duration-300" 
+                      style={{ width: `${sessionData.totalQuestions > 0 ? (sessionData.solvedQuestions / sessionData.totalQuestions) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Accuracy</span>
+                    <span>{sessionData.avgAccuracy}%</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div 
+                      className="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                      style={{ width: `${sessionData.avgAccuracy}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button variant="outline" className="w-full justify-start">
+                <Download className="h-4 w-4 mr-2" />
+                Export All Solutions
+              </Button>
+              <Button variant="outline" className="w-full justify-start">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Reprocess All Papers
+              </Button>
+              <Button variant="outline" className="w-full justify-start">
+                <Target className="h-4 w-4 mr-2" />
+                Mark All Questions
+              </Button>
+            </CardContent>
+          </Card>
+
         </div>
 
         {/* Main Content - Questions & Answers */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6 ">
           {sessionData.papers.filter(p => p.documentType === 'qsPaper').length > 0 && (
             <Card>
               <CardHeader>
@@ -1065,7 +1160,7 @@ export default function SessionPage() {
                 </div>
               </div>
 
-              <CardContent className="p-6">
+              <CardContent className="p-6 h-[calc(100vh-280px)] overflow-y-auto">
                 {questions.length > 0 ? (
                   <div className="space-y-6">
                     {Object.entries(groupQuestionsByMain(questions)).map(([mainQuestionNumber, questionGroup]) => (
@@ -1372,89 +1467,6 @@ export default function SessionPage() {
               </CardContent>
             </Card>
           )}
-        </div>
-
-        {/* Right Column - Session Stats (Reduced) */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* Session Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Session Overview</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Papers</span>
-                </div>
-                <span className="font-medium">{sessionData.papers.length}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Activity className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Total Questions</span>
-                </div>
-                <span className="font-medium">{sessionData.totalQuestions}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Solved</span>
-                </div>
-                <span className="font-medium">{sessionData.solvedQuestions}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Target className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Avg Accuracy</span>
-                </div>
-                <span className="font-medium">{sessionData.avgAccuracy}%</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Processing Time</span>
-                </div>
-                <span className="font-medium">{sessionData.totalProcessingTime}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Progress */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Questions Solved</span>
-                    <span>{sessionData.solvedQuestions}/{sessionData.totalQuestions}</span>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div 
-                      className="bg-primary h-2 rounded-full transition-all duration-300" 
-                      style={{ width: `${(sessionData.solvedQuestions / sessionData.totalQuestions) * 100}%` }}
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Accuracy</span>
-                    <span>{sessionData.avgAccuracy}%</span>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div 
-                      className="bg-green-500 h-2 rounded-full transition-all duration-300" 
-                      style={{ width: `${sessionData.avgAccuracy}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
 

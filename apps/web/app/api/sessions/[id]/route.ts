@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
 import { File } from "@prisma/client"
+
 interface Context {
   params: Promise<{ id: string }>
 }
@@ -9,11 +11,40 @@ export async function GET(request: NextRequest, { params }: Context) {
   try {
     const { id: sessionId } = await params
 
-    // For now, we'll construct a session from uploaded files
-    // In a future version, you might have a dedicated Session model
-    const files : File[] = await prisma.file.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 10 // Limit to recent files for this demo
+    // Get the authenticated user
+    const session = await auth()
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get the user from database
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Verify that the session exists and belongs to this user
+    const processorSession = await prisma.processorSession.findFirst({
+      where: {
+        id: sessionId,
+        userId: user.id
+      }
+    })
+
+    if (!processorSession) {
+      return NextResponse.json({ error: 'Session not found or unauthorized' }, { status: 404 })
+    }
+
+    // Get files that belong to this user and session
+    const files: File[] = await prisma.file.findMany({
+      where: {
+        userId: user.id,
+        processorSessionId: sessionId, // Files must belong to this specific session
+      },
+      orderBy: { createdAt: 'desc' }
     })
 
     // Count questions for each file
