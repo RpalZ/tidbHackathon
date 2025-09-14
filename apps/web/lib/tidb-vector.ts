@@ -320,6 +320,226 @@ export async function batchInsertQuestionsWithVectors(
 }
 
 /**
+ * Insert a mark scheme with its vector embedding into TiDB
+ * Similar to insertQuestionWithVector but for mark schemes
+ * 
+ * @param markSchemeData - Mark scheme data
+ * @param fileId - ID of the source file
+ * @returns Object with mark scheme ID and embedding confirmation
+ */
+export async function insertMarkSchemeWithVector(
+  markSchemeData: {
+    questionNumber: string
+    markingCriteria: string
+    maxMarks: number
+    markBreakdown?: any
+    acceptableAnswers?: string[]
+    keywords?: string[]
+    pageNumber: number
+    semanticSummary: string
+  },
+  fileId: string
+): Promise<{ markSchemeId: string; embeddingStored: boolean }> {
+  try {
+    // Step 1: Generate vector embedding from semantic summary
+    const embedding = await generateEmbedding(markSchemeData.semanticSummary)
+    const vectorString = vectorToString(embedding)
+
+    // Step 2: Insert mark scheme using Prisma (without vector)
+    const markScheme = await prisma.msQuestions.create({
+      data: {
+        questionNumber: markSchemeData.questionNumber,
+        markingCriteria: markSchemeData.markingCriteria,
+        maxMarks: markSchemeData.maxMarks,
+        markBreakdown: markSchemeData.markBreakdown,
+        acceptableAnswers: markSchemeData.acceptableAnswers,
+        keywords: markSchemeData.keywords,
+        pageNumber: markSchemeData.pageNumber,
+        semanticSummary: markSchemeData.semanticSummary,
+        fileId: fileId,
+      }
+    })
+
+    // Step 3: Update with vector embedding using raw SQL
+    await executeVectorSQL(`
+      UPDATE MsQuestions 
+      SET vectorEmbedding = ?
+      WHERE id = ?
+    `, [vectorString, markScheme.id])
+
+    return {
+      markSchemeId: markScheme.id,
+      embeddingStored: true
+    }
+  } catch (error) {
+    console.error('Failed to insert mark scheme with vector:', error)
+    throw new Error(`Mark scheme insertion failed: ${error}`)
+  }
+}
+
+/**
+ * Batch insert multiple mark schemes with vector embeddings
+ * 
+ * @param markSchemesData - Array of mark scheme objects
+ * @param fileId - ID of the source file
+ * @returns Summary of insertion results
+ */
+export async function batchInsertMarkSchemesWithVectors(
+  markSchemesData: Array<{
+    questionNumber: string
+    markingCriteria: string
+    maxMarks: number
+    markBreakdown?: any
+    acceptableAnswers?: string[]
+    keywords?: string[]
+    pageNumber: number
+    semanticSummary: string
+  }>,
+  fileId: string
+): Promise<{
+  totalProcessed: number
+  successful: number
+  failed: number
+  markSchemeIds: string[]
+}> {
+  const results = {
+    totalProcessed: 0,
+    successful: 0,
+    failed: 0,
+    markSchemeIds: [] as string[]
+  }
+
+  // Process in batches of 5 to avoid API rate limits
+  const batchSize = 5
+  for (let i = 0; i < markSchemesData.length; i += batchSize) {
+    const batch = markSchemesData.slice(i, i + batchSize)
+    
+    for (const markSchemeData of batch) {
+      try {
+        const result = await insertMarkSchemeWithVector(markSchemeData, fileId)
+        results.successful++
+        results.markSchemeIds.push(result.markSchemeId)
+      } catch (error) {
+        console.error(`Failed to insert mark scheme ${markSchemeData.questionNumber}:`, error)
+        results.failed++
+      }
+      results.totalProcessed++
+    }
+
+    // Small delay between batches to respect API limits
+    if (i + batchSize < markSchemesData.length) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+  }
+
+  return results
+}
+
+/**
+ * Automatically link mark schemes to questions using semantic similarity
+ * Updated for 1-to-1 file linking - only searches within linked question paper
+ * 
+ * @param markSchemeId - ID of the mark scheme file
+ * @param threshold - Minimum similarity score for linking (default: 0.8)
+ * @returns Summary of linking results
+ */
+export async function linkMarkSchemesToLinkedQuestions(
+  markSchemeId: string,
+  threshold: number = 0.8
+): Promise<{
+  totalProcessed: number
+  linked: number
+  failed: number
+  linkedPairs: Array<{ markSchemeId: string; questionId: string; similarity: number }>
+}> {
+  const results = {
+    totalProcessed: 0,
+    linked: 0,
+    failed: 0,
+    linkedPairs: [] as Array<{ markSchemeId: string; questionId: string; similarity: number }>
+  }
+
+  try {
+    // Get the mark scheme file and its linked question paper
+    const markSchemeFile = await prisma.file.findUnique({
+      where: { id: markSchemeId },
+      include: { linkedQuestionPaper: true }
+    })
+
+    if (!markSchemeFile) {
+      return { ...results, failed: 1 }
+    }
+
+    if (!markSchemeFile.linkedQuestionPaper) {
+      console.log('No linked question paper found for mark scheme:', markSchemeId)
+      return results
+    }
+
+    // Get all mark schemes from this mark scheme file
+    const markSchemes = await prisma.msQuestions.findMany({
+      where: { fileId: markSchemeId }
+    })
+
+    for (const markScheme of markSchemes) {
+      try {
+        if (!markScheme.vectorEmbedding) {
+          results.failed++
+          continue
+        }
+
+        // Search for similar questions ONLY in the linked question paper
+        const similarQuestions = await executeVectorSQL(`
+          SELECT 
+            id,
+            questionNumber,
+            (1 - vec_cosine_distance(vectorEmbedding, ?)) as similarity
+          FROM Questions
+          WHERE vectorEmbedding IS NOT NULL
+            AND fileId = ?
+            AND questionNumber = ?
+            AND (1 - vec_cosine_distance(vectorEmbedding, ?)) >= ?
+          ORDER BY similarity DESC
+          LIMIT 1
+        `, [
+          markScheme.vectorEmbedding, 
+          markSchemeFile.linkedQuestionPaper.id,
+          markScheme.questionNumber,
+          markScheme.vectorEmbedding, 
+          threshold
+        ])
+
+        if (similarQuestions.length > 0) {
+          const bestMatch = similarQuestions[0]
+          
+          // Update mark scheme with linked question
+          await prisma.msQuestions.update({
+            where: { id: markScheme.id },
+            data: { linkedQuestionId: bestMatch.id }
+          })
+
+          results.linked++
+          results.linkedPairs.push({
+            markSchemeId: markScheme.id,
+            questionId: bestMatch.id,
+            similarity: Math.round(bestMatch.similarity * 10000) / 10000
+          })
+        }
+
+        results.totalProcessed++
+      } catch (error) {
+        console.error(`Failed to link mark scheme ${markScheme.id}:`, error)
+        results.failed++
+      }
+    }
+
+    return results
+  } catch (error) {
+    console.error('Failed to process mark scheme linking:', error)
+    return { ...results, failed: 1 }
+  }
+}
+
+/**
  * Setup TiDB vector tables and indexes
  * Call this once after schema migration to add vector columns and indexes
  * 

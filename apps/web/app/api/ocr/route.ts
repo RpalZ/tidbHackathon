@@ -125,22 +125,8 @@ export async function POST(request: NextRequest) {
   });
 
   const qna = await PDFDocumentsToQnA(file, filename);
-  const qnaParsed = JSON.parse(JSON.stringify(qna));
+  // const qnaParsed = JSON.parse(JSON.stringify(qna));
 
-  for (let qnas of qna.QnAs) {
-    const semanticText = qnas.semanticSummary;
-
-    // convert to embedding using our utility function
-    const embeddingResponse = await client.embeddings.create({
-      model: "text-embedding-3-small",
-      input: semanticText,
-    });
-
-    // Individual embeddings are handled by batchInsertQuestionsWithVectors below
-  }
-
-  // Use our utility functions to store in TiDB with vectors
-  // First, we need to create a File record to link questions to
 
   // Use our batch insert utility to store all questions with vectors
   const insertResults = await batchInsertQuestionsWithVectors(
@@ -158,15 +144,15 @@ export async function POST(request: NextRequest) {
     savedFile.id
   );
 
-  console.log('Batch insert results:', insertResults);  //inputting to db 
+  // console.log('Batch insert results:', insertResults);  //inputting to db 
 
 
 
-  console.log(qna)
+  // console.log(qna)
 
-  //write to file
-  const dir = 'C:\\Users\\rayap\\OneDrive\\Desktop\\tidbHackathon\\apps\\backend\\output\\json';
-  fs.writeFileSync(`${dir}\\${filename.replace('.pdf', '.json')}`, JSON.stringify(qna, null, 2));
+  // //write to file
+  // const dir = 'C:\\Users\\rayap\\OneDrive\\Desktop\\tidbHackathon\\apps\\backend\\output\\json';
+  // fs.writeFileSync(`${dir}\\${filename.replace('.pdf', '.json')}`, JSON.stringify(qna, null, 2));
 
 
 

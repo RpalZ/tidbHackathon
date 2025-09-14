@@ -55,6 +55,9 @@ model Questions {
     fileId                String?
     file                  File?    @relation(fields: [fileId], references: [id])
     
+    // Relation to mark schemes
+    msQuestions           MsQuestions[]
+    
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     
@@ -64,18 +67,54 @@ model Questions {
     @@index([isMultipleChoice])
 }
 
+model MsQuestions {
+    id                    String   @id @default(cuid())
+    questionNumber        String   // "1", "2(a)", "3b(i)" - matches original question
+    markingCriteria       String   @db.Text // Detailed marking criteria/rubric
+    maxMarks              Int      // Total marks available for this question
+    markBreakdown         Json?    // Simple mark allocation (e.g., {"method": 2, "accuracy": 3})
+    acceptableAnswers     Json?    // Array of acceptable answer variations
+    keywords              Json?    // Key terms/concepts that should be present
+    pageNumber            Int
+    semanticSummary       String   @db.Text // For search purposes
+    
+    // Vector embedding for semantic matching with questions
+    vectorEmbedding       String?  @db.Text // Will be converted to VECTOR(1536) in TiDB
+    
+    // Link to source file
+    fileId                String?
+    file                  File?    @relation(fields: [fileId], references: [id])
+    
+    // Link to corresponding question if available
+    linkedQuestionId      String?
+    linkedQuestion        Questions? @relation(fields: [linkedQuestionId], references: [id])
+    
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    
+    @@index([questionNumber])
+    @@index([fileId])
+    @@index([linkedQuestionId])
+    @@map("MsQuestions")
+}
+
 model File {
     id        String   @id @default(cuid())
     userId    String
     name      String
     size      Int
     content   Bytes? @db.LongBlob
-    type      String // "qsPaper" or "Markscheme"
+    type      String // "qsPaper" or "markScheme"
     mimetype  String
     
     // Add OCR and vector fields
     textContent       String? @db.Text               // Full extracted OCR text
     vectorEmbedding   String? @db.Text               // Document-level vector embedding
+    
+    // 1-to-1 relationship between question papers and mark schemes
+    linkedMarkSchemeId    String? @unique // Only for question papers
+    linkedMarkScheme      File?   @relation("QuestionToMarkScheme", fields: [linkedMarkSchemeId], references: [id])
+    linkedQuestionPaper   File?   @relation("QuestionToMarkScheme")
     
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -83,12 +122,14 @@ model File {
     processorSessionId String?
     processorSession   ProcessorSession? @relation(fields: [processorSessionId], references: [id])
     
-    // Relation to extracted questions
+    // Relation to extracted questions and mark schemes
     questions         Questions[]
+    msQuestions       MsQuestions[]
     
     @@index([userId])
     @@index([mimetype])
     @@index([type])
+    @@index([linkedMarkSchemeId])
 }
  
 

@@ -18,7 +18,12 @@ import {
   Trash2,
   AlertCircle,
   RefreshCw,
-  Target
+  Target,
+  Link2,
+  Link2Off,
+  MessageCircle,
+  Send,
+  GraduationCap
 } from "lucide-react"
 import Link from "next/link"
 
@@ -35,6 +40,8 @@ interface ExamPaper {
   accuracy?: number
   processingTime?: string
   errorMessage?: string
+  documentType?: 'qsPaper' | 'markScheme'
+  linkedMarkSchemeId?: string // For question papers
 }
 
 interface Question {
@@ -80,6 +87,10 @@ export default function SessionPage() {
   const [error, setError] = useState<string | null>(null)
   const [uploadingPaper, setUploadingPaper] = useState(false)
   const [dragActive, setDragActive] = useState(false)
+  const [documentType, setDocumentType] = useState<'qsPaper' | 'markScheme'>('qsPaper')
+  const [showLinkModal, setShowLinkModal] = useState(false)
+  const [linkingPaperId, setLinkingPaperId] = useState<string | null>(null)
+  const [availableMarkSchemes, setAvailableMarkSchemes] = useState<ExamPaper[]>([])
 
   // Drag and drop handlers
   const handleDrag = (e: React.DragEvent) => {
@@ -125,105 +136,53 @@ export default function SessionPage() {
       try {
         setLoading(true)
         
-        // Mock session data for exam parser
-        const mockSessionData: SessionData = {
-          id: sessionId,
-          name: `${sessionId.split('-').pop()} Exam Session`,
-          examBoard: 'Edexcel',
-          subject: 'Physics',
-          year: 2024,
-          createdAt: new Date(Date.now() - Math.random() * 86400000),
-          status: 'processing',
-          totalQuestions: 45,
-          solvedQuestions: 28,
-          avgAccuracy: 85.6,
-          totalProcessingTime: '2m 34s',
-          papers: [
-            {
-              id: 'paper1',
-              filename: 'Edexcel_Physics_Paper_2_2024.pdf',
-              examBoard: 'Edexcel',
-              subject: 'Physics',
-              year: 2024,
-              status: 'solved',
-              uploadedAt: new Date(Date.now() - 3600000),
-              totalQuestions: 25,
-              solvedQuestions: 25,
-              accuracy: 92.0,
-              processingTime: '1m 45s'
-            },
-            {
-              id: 'paper2',
-              filename: 'Edexcel_Physics_Paper_1_2024.pdf',
-              examBoard: 'Edexcel',
-              subject: 'Physics',
-              year: 2024,
-              status: 'processing',
-              uploadedAt: new Date(Date.now() - 1800000),
-              totalQuestions: 20,
-              solvedQuestions: 3,
-              processingTime: '49s'
-            }
-          ]
+        // Load real session data from database
+        const response = await fetch(`/api/sessions/${sessionId}`)
+        if (!response.ok) {
+          throw new Error('Failed to load session data')
         }
-
-        // Mock questions data
-        const mockQuestions: Question[] = [
-          {
-            id: 'q1',
-            questionNumber: '1(a)',
-            text: 'A ball is thrown vertically upwards with a speed of 12 m/s. Calculate the time taken to reach maximum height.',
-            marks: 3,
-            solution: {
-              steps: [
-                'At maximum height, final velocity v = 0',
-                'Using kinematic equation: v = u + at',
-                '0 = 12 + (-9.8)t',
-                't = 12/9.8 = 1.22 s'
-              ],
-              finalAnswer: '1.22 s',
-              confidence: 95
-            },
-            status: 'solved'
-          },
-          {
-            id: 'q2',
-            questionNumber: '1(b)',
-            text: 'Calculate the maximum height reached by the ball.',
-            marks: 2,
-            solution: {
-              steps: [
-                'Using v² = u² + 2as',
-                '0² = 12² + 2(-9.8)s',
-                '0 = 144 - 19.6s',
-                's = 144/19.6 = 7.35 m'
-              ],
-              finalAnswer: '7.35 m',
-              confidence: 93
-            },
-            status: 'solved'
-          },
-          {
-            id: 'q3',
-            questionNumber: '2(a)',
-            text: 'A force of 50 N acts on a mass of 5 kg. Calculate the acceleration produced.',
-            marks: 2,
-            status: 'solving'
-          }
-        ]
-
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800))
         
-        setSessionData(mockSessionData)
-        setQuestions(mockQuestions)
-        if (mockSessionData.papers.length > 0) {
-          setSelectedPaper(mockSessionData.papers[0]!)
+        const sessionData = await response.json()
+        
+        // Convert date strings back to Date objects
+        const processedSessionData = {
+          ...sessionData,
+          createdAt: new Date(sessionData.createdAt),
+          papers: sessionData.papers.map((paper: any) => ({
+            ...paper,
+            uploadedAt: new Date(paper.uploadedAt)
+          }))
         }
+        
+        setSessionData(processedSessionData)
+        
+        // Load questions for the selected paper
+        if (sessionData.papers.length > 0) {
+          setSelectedPaper(sessionData.papers[0])
+          await loadQuestionsForPaper(sessionData.papers[0].id)
+        }
+        
         setError(null)
       } catch (err) {
         setError('Failed to load session data')
         console.error('Error loading session:', err)
+        
+        // Fallback: Create empty session if none exists
+        const fallbackSession: SessionData = {
+          id: sessionId,
+          name: `Session ${sessionId.slice(-8)}`,
+          examBoard: 'Edexcel',
+          subject: 'Physics',
+          year: 2024,
+          createdAt: new Date(),
+          status: 'draft',
+          totalQuestions: 0,
+          solvedQuestions: 0,
+          avgAccuracy: 0,
+          totalProcessingTime: '0s',
+          papers: []
+        }
+        setSessionData(fallbackSession)
       } finally {
         setLoading(false)
       }
@@ -233,6 +192,20 @@ export default function SessionPage() {
       loadSessionData()
     }
   }, [sessionId])
+
+  // Load questions for a specific paper
+  const loadQuestionsForPaper = async (paperId: string) => {
+    try {
+      const response = await fetch(`/api/questions?fileId=${paperId}`)
+      if (response.ok) {
+        const questionsData = await response.json()
+        setQuestions(questionsData.questions || [])
+      }
+    } catch (error) {
+      console.error('Error loading questions:', error)
+      setQuestions([])
+    }
+  }
 
   // Upload paper handler
   const handleUploadPaper = async (file: File) => {
@@ -246,8 +219,11 @@ export default function SessionPage() {
         reader.readAsDataURL(file)
       })
       
-      // Send to OCR API
-      const response = await fetch('/api/ocr', {
+      // Choose API endpoint based on document type
+      const apiEndpoint = documentType === 'markScheme' ? '/api/markscheme' : '/api/ocr'
+      
+      // Send to appropriate API
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -259,20 +235,22 @@ export default function SessionPage() {
       })
       
       if (!response.ok) {
-        throw new Error('OCR request failed')
+        throw new Error(`${documentType === 'markScheme' ? 'Mark scheme' : 'OCR'} request failed`)
       }
       
       const result = await response.json()
-      console.log('OCR Result:', result)
+      console.log(`${documentType === 'markScheme' ? 'Mark Scheme' : 'OCR'} Result:`, result)
       
-      if (result.success) {
-        console.log(`✅ Processed ${result.totalPages} pages`)
-        console.log(`📄 Full text length: ${result.result?.length || 0} characters`)
-        
-        // Log page breakdown
-        result.pages?.forEach((page: any, index: number) => {
-          console.log(`Page ${index + 1}: ${page.text.substring(0, 100)}...`)
-        })
+      // Handle different response formats
+      if (documentType === 'markScheme') {
+        if (result.markSchemeData) {
+          console.log(`✅ Processed ${result.markSchemeData.markSchemes.length} mark scheme entries`)
+          console.log(`� Linked ${result.linkingResults.linked} to existing questions`)
+        }
+      } else {
+        if (result.qna?.QnAs) {
+          console.log(`✅ Processed ${result.qna.QnAs.length} questions`)
+        }
       }
       
       const newPaper: ExamPaper = {
@@ -283,8 +261,11 @@ export default function SessionPage() {
         year: 2024,
         status: 'processing',
         uploadedAt: new Date(),
-        totalQuestions: 0,
-        solvedQuestions: 0
+        totalQuestions: documentType === 'markScheme' 
+          ? (result.markSchemeData?.markSchemes?.length || 0)
+          : (result.qna?.QnAs?.length || 0),
+        solvedQuestions: 0,
+        documentType: documentType
       }
       
       if (sessionData) {
@@ -297,6 +278,74 @@ export default function SessionPage() {
       console.error('Upload failed:', err)
     } finally {
       setUploadingPaper(false)
+    }
+  }
+
+  // File linking functions
+  const openLinkModal = (questionPaperId: string) => {
+    setLinkingPaperId(questionPaperId)
+    // Get available mark schemes from current session
+    const markSchemes = sessionData?.papers.filter(p => p.documentType === 'markScheme') || []
+    setAvailableMarkSchemes(markSchemes)
+    setShowLinkModal(true)
+  }
+
+  const linkFiles = async (questionPaperId: string, markSchemeId: string) => {
+    try {
+      const response = await fetch('/api/link-files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionPaperId, markSchemeId })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to link files')
+      }
+
+      const result = await response.json()
+      console.log('Files linked successfully:', result)
+
+      // Update session data to reflect the link
+      if (sessionData) {
+        const updatedPapers = sessionData.papers.map(paper => 
+          paper.id === questionPaperId 
+            ? { ...paper, linkedMarkSchemeId: markSchemeId }
+            : paper
+        )
+        setSessionData({ ...sessionData, papers: updatedPapers })
+      }
+
+      setShowLinkModal(false)
+    } catch (error) {
+      console.error('Error linking files:', error)
+    }
+  }
+
+  const unlinkFiles = async (questionPaperId: string) => {
+    try {
+      const response = await fetch('/api/link-files', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionPaperId })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to unlink files')
+      }
+
+      // Update session data to remove the link
+      if (sessionData) {
+        const updatedPapers = sessionData.papers.map(paper => 
+          paper.id === questionPaperId 
+            ? { ...paper, linkedMarkSchemeId: undefined }
+            : paper
+        )
+        setSessionData({ ...sessionData, papers: updatedPapers })
+      }
+
+      console.log('Files unlinked successfully')
+    } catch (error) {
+      console.error('Error unlinking files:', error)
     }
   }
 
@@ -493,11 +542,41 @@ export default function SessionPage() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Upload className="h-5 w-5 mr-2" />
-                Upload Exam Paper
+                Upload Document
               </CardTitle>
-              <CardDescription>Upload PDF or image files for OCR processing and solving</CardDescription>
+              <CardDescription>Upload PDF files for processing (question papers or mark schemes)</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              {/* Document Type Selector */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Document Type</label>
+                <div className="flex space-x-4">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="documentType"
+                      value="qsPaper"
+                      checked={documentType === 'qsPaper'}
+                      onChange={(e) => setDocumentType(e.target.value as 'qsPaper')}
+                      className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
+                    />
+                    <span className="text-sm">Question Paper</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="documentType"
+                      value="markScheme"
+                      checked={documentType === 'markScheme'}
+                      onChange={(e) => setDocumentType(e.target.value as 'markScheme')}
+                      className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
+                    />
+                    <span className="text-sm">Mark Scheme</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Upload Area */}
               <div 
                 className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                   dragActive 
@@ -511,12 +590,15 @@ export default function SessionPage() {
               >
                 <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground mb-4">
-                  {dragActive ? 'Drop your exam papers here' : 'Drop your exam papers here, or click to browse'}
+                  {dragActive 
+                    ? `Drop your ${documentType === 'qsPaper' ? 'question paper' : 'mark scheme'} here` 
+                    : `Drop your ${documentType === 'qsPaper' ? 'question paper' : 'mark scheme'} here, or click to browse`
+                  }
                 </p>
                 <input
                   type="file"
                   id="file-upload"
-                  accept=".pdf,.jpg,.jpeg,.png"
+                  accept=".pdf"
                   onChange={handleFileSelect}
                   className="hidden"
                 />
@@ -527,17 +609,21 @@ export default function SessionPage() {
                   {uploadingPaper ? (
                     <>
                       <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Uploading...
+                      Processing...
                     </>
                   ) : (
                     <>
                       <Upload className="h-4 w-4 mr-2" />
-                      Choose Files
+                      Choose {documentType === 'qsPaper' ? 'Question Paper' : 'Mark Scheme'}
                     </>
                   )}
                 </Button>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Supports PDF, JPG, PNG up to 50MB
+                  Supports PDF files up to 50MB • 
+                  {documentType === 'qsPaper' 
+                    ? ' Questions will be extracted and parsed' 
+                    : ' Marking criteria will be extracted and linked to questions'
+                  }
                 </p>
               </div>
             </CardContent>
@@ -548,9 +634,9 @@ export default function SessionPage() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <FileText className="h-5 w-5 mr-2" />
-                Exam Papers ({sessionData.papers.length})
+                Documents ({sessionData.papers.length})
               </CardTitle>
-              <CardDescription>Manage and process your uploaded exam papers</CardDescription>
+              <CardDescription>Manage and process your uploaded documents (question papers and mark schemes)</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -560,7 +646,23 @@ export default function SessionPage() {
                       <div className="flex items-center space-x-3">
                         <FileText className="h-5 w-5 text-muted-foreground" />
                         <div>
-                          <h4 className="font-medium">{paper.filename}</h4>
+                          <div className="flex items-center space-x-2">
+                            <h4 className="font-medium">{paper.filename}</h4>
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              paper.documentType === 'markScheme' 
+                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                                : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                            }`}>
+                              {paper.documentType === 'markScheme' ? 'Mark Scheme' : 'Question Paper'}
+                            </span>
+                            {/* Link status indicator */}
+                            {paper.documentType === 'qsPaper' && paper.linkedMarkSchemeId && (
+                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 flex items-center">
+                                <Link2 className="h-3 w-3 mr-1" />
+                                Linked
+                              </span>
+                            )}
+                          </div>
                           <p className="text-sm text-muted-foreground">
                             Uploaded {paper.uploadedAt.toLocaleString()}
                           </p>
@@ -574,7 +676,10 @@ export default function SessionPage() {
                         <Button variant="ghost" size="sm">
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => setSelectedPaper(paper)}>
+                        <Button variant="ghost" size="sm" onClick={() => {
+                          setSelectedPaper(paper)
+                          loadQuestionsForPaper(paper.id)
+                        }}>
                           <Target className="h-4 w-4" />
                         </Button>
                       </div>
@@ -583,16 +688,22 @@ export default function SessionPage() {
                     {/* Paper Stats */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Questions:</span>
+                        <span className="text-muted-foreground">
+                          {paper.documentType === 'markScheme' ? 'Criteria:' : 'Questions:'}
+                        </span>
                         <span className="ml-1 font-medium">{paper.totalQuestions}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Solved:</span>
+                        <span className="text-muted-foreground">
+                          {paper.documentType === 'markScheme' ? 'Linked:' : 'Solved:'}
+                        </span>
                         <span className="ml-1 font-medium">{paper.solvedQuestions}</span>
                       </div>
                       {paper.accuracy && (
                         <div>
-                          <span className="text-muted-foreground">Accuracy:</span>
+                          <span className="text-muted-foreground">
+                            {paper.documentType === 'markScheme' ? 'Match Rate:' : 'Accuracy:'}
+                          </span>
                           <span className="ml-1 font-medium">{paper.accuracy}%</span>
                         </div>
                       )}
@@ -609,10 +720,10 @@ export default function SessionPage() {
                       {paper.status === 'uploaded' && (
                         <Button size="sm" onClick={() => processPaper(paper.id)}>
                           <FileText className="h-4 w-4 mr-2" />
-                          Parse Paper
+                          {paper.documentType === 'markScheme' ? 'Process Mark Scheme' : 'Parse Paper'}
                         </Button>
                       )}
-                      {paper.status === 'parsed' && (
+                      {paper.status === 'parsed' && paper.documentType === 'qsPaper' && (
                         <Button size="sm" onClick={() => solveQuestions(paper.id)}>
                           <Brain className="h-4 w-4 mr-2" />
                           Solve Questions
@@ -621,9 +732,35 @@ export default function SessionPage() {
                       {paper.status === 'solved' && (
                         <Button size="sm" variant="outline">
                           <Download className="h-4 w-4 mr-2" />
-                          Export Solutions
+                          {paper.documentType === 'markScheme' ? 'Export Criteria' : 'Export Solutions'}
                         </Button>
                       )}
+                      
+                      {/* Link/Unlink buttons for question papers */}
+                      {paper.documentType === 'qsPaper' && (
+                        paper.linkedMarkSchemeId ? (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => unlinkFiles(paper.id)}
+                            className="text-orange-600 hover:text-orange-700"
+                          >
+                            <Link2Off className="h-4 w-4 mr-2" />
+                            Unlink
+                          </Button>
+                        ) : (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => openLinkModal(paper.id)}
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            <Link2 className="h-4 w-4 mr-2" />
+                            Link MS
+                          </Button>
+                        )
+                      )}
+                      
                       <Button size="sm" variant="ghost">
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -791,6 +928,48 @@ export default function SessionPage() {
           </Card>
         </div>
       </div>
+
+      {/* Link Files Modal */}
+      {showLinkModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Link to Mark Scheme</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Select a mark scheme to link with this question paper. This will enable targeted semantic matching.
+            </p>
+            
+            <div className="space-y-2 mb-4">
+              {availableMarkSchemes.length > 0 ? (
+                availableMarkSchemes.map((markScheme) => (
+                  <Button
+                    key={markScheme.id}
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => linkingPaperId && linkFiles(linkingPaperId, markScheme.id)}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    {markScheme.filename}
+                  </Button>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No mark schemes available. Upload a mark scheme first.
+                </p>
+              )}
+            </div>
+            
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowLinkModal(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
