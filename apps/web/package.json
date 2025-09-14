@@ -30,6 +30,7 @@
     "class-variance-authority": "^0.7.1",
     "dommatrix": "^1.0.3",
     "dotenv": "^17.2.1",
+    "katex": "^0.16.22",
     "lucide-react": "^0.475.0",
     "mysql2": "^3.14.4",
     "next": "^15.5.2",
@@ -43,6 +44,9 @@
     "prisma": "^6.15.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-markdown": "^10.1.0",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
     "sharp": "^0.34.3",
     "zod": "^3.25.76"
   },

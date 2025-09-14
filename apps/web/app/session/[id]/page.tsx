@@ -5,6 +5,10 @@ import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card"
 import { Button } from "@workspace/ui/components/button"
+import ReactMarkdown from 'react-markdown'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
+import 'katex/dist/katex.min.css'
 import { 
   ArrowLeft, 
   Upload, 
@@ -23,7 +27,12 @@ import {
   Link2Off,
   MessageCircle,
   Send,
-  GraduationCap
+  GraduationCap,
+  ChevronDown,
+  ChevronUp,
+  Edit,
+  Save,
+  X
 } from "lucide-react"
 import Link from "next/link"
 
@@ -49,13 +58,33 @@ interface Question {
   questionNumber: string
   text: string
   marks: number
+  type: 'main' | 'subquestion' | 'subpart' // Question hierarchy type
+  parentQuestionNumber?: string // Parent question identifier
+  isMultipleChoice: boolean
+  imageDescription?: string
+  pageNumber: number
   diagrams?: string[]
+  // Detected answer from OCR (user's original response)
+  detectedAnswer?: {
+    type: 'text' | 'mcq'
+    answer: string | null
+    choices?: string[] // For MCQ questions
+  }
   solution?: {
     steps: string[]
     finalAnswer: string
     confidence: number
   }
   status: 'pending' | 'solving' | 'solved' | 'error'
+  userAnswer?: string // User's current/edited answer
+  chatMessages?: ChatMessage[] // Chat history for this question
+}
+
+interface ChatMessage {
+  id: string
+  message: string
+  timestamp: Date
+  isUser: boolean // true for user messages, false for AI responses
 }
 
 interface SessionData {
@@ -91,6 +120,15 @@ export default function SessionPage() {
   const [showLinkModal, setShowLinkModal] = useState(false)
   const [linkingPaperId, setLinkingPaperId] = useState<string | null>(null)
   const [availableMarkSchemes, setAvailableMarkSchemes] = useState<ExamPaper[]>([])
+  
+    // New states for revamped UI
+  const [expandedChats, setExpandedChats] = useState<Set<string>>(new Set())
+  const [chatInputs, setChatInputs] = useState<Record<string, string>>({})
+  const [activeTab, setActiveTab] = useState<string>('')
+  const [editingAnswers, setEditingAnswers] = useState<Set<string>>(new Set())
+  const [tempAnswers, setTempAnswers] = useState<Record<string, string>>({})
+  const [collapsedMainQuestions, setCollapsedMainQuestions] = useState<Set<string>>(new Set())
+  const [savingAnswers, setSavingAnswers] = useState<Set<string>>(new Set())
 
   // Drag and drop handlers
   const handleDrag = (e: React.DragEvent) => {
@@ -158,8 +196,12 @@ export default function SessionPage() {
         
         // Load questions for the selected paper
         if (sessionData.papers.length > 0) {
-          setSelectedPaper(sessionData.papers[0])
-          await loadQuestionsForPaper(sessionData.papers[0].id)
+          const questionPapers = sessionData.papers.filter((p: any) => p.documentType === 'qsPaper')
+          if (questionPapers.length > 0) {
+            setSelectedPaper(questionPapers[0])
+            setActiveTab(questionPapers[0].id)
+            await loadQuestionsForPaper(questionPapers[0].id)
+          }
         }
         
         setError(null)
@@ -205,6 +247,234 @@ export default function SessionPage() {
       console.error('Error loading questions:', error)
       setQuestions([])
     }
+  }
+
+  // Handle user answer changes
+  const handleAnswerChange = (questionId: string, answer: string) => {
+    setQuestions(prev => prev.map(q => 
+      q.id === questionId ? { ...q, userAnswer: answer } : q
+    ))
+  }
+
+  // Toggle answer editing
+  const toggleAnswerEdit = (questionId: string) => {
+    const question = questions.find(q => q.id === questionId)
+    if (!question) return
+
+    setEditingAnswers(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(questionId)) {
+        newSet.delete(questionId)
+        // Remove temp answer when canceling edit
+        setTempAnswers(tempPrev => {
+          const newTemp = { ...tempPrev }
+          delete newTemp[questionId]
+          return newTemp
+        })
+      } else {
+        newSet.add(questionId)
+        // Initialize temp answer with detected answer or current user answer
+        const currentAnswer = question.userAnswer || question.detectedAnswer?.answer || ''
+        setTempAnswers(tempPrev => ({
+          ...tempPrev,
+          [questionId]: currentAnswer
+        }))
+      }
+      return newSet
+    })
+  }
+
+  // Handle temp answer change during editing
+  const handleTempAnswerChange = (questionId: string, answer: string) => {
+    setTempAnswers(prev => ({
+      ...prev,
+      [questionId]: answer
+    }))
+  }
+
+  // Save edited answer
+  const saveAnswerEdit = async (questionId: string) => {
+    const tempAnswer = tempAnswers[questionId]
+    const question = questions.find(q => q.id === questionId)
+    if (tempAnswer === undefined || !question) return
+
+    setSavingAnswers(prev => new Set(prev).add(questionId))
+    
+    try {
+      // Prepare answer object based on question type
+      const answerObject = question.isMultipleChoice ? {
+        type: 'mcq',
+        choices: question.detectedAnswer?.choices || [],
+        answer: tempAnswer
+      } : {
+        type: 'text',
+        answer: tempAnswer
+      }
+
+      // Save to database
+      const response = await fetch('/api/questions', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          questionId: questionId,
+          answer: answerObject
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save answer')
+      }
+
+      // Update local state
+      setQuestions(prev => prev.map(q => 
+        q.id === questionId ? { 
+          ...q, 
+          userAnswer: tempAnswer,
+          detectedAnswer: question.isMultipleChoice ? {
+            type: 'mcq' as const,
+            answer: tempAnswer,
+            choices: question.detectedAnswer?.choices || []
+          } : {
+            type: 'text' as const,
+            answer: tempAnswer
+          }
+        } : q
+      ))
+
+      // Remove from editing set and temp answers
+      setEditingAnswers(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(questionId)
+        return newSet
+      })
+      
+      setTempAnswers(prev => {
+        const newTemp = { ...prev }
+        delete newTemp[questionId]
+        return newTemp
+      })
+
+    } catch (error) {
+      console.error('Error saving answer:', error)
+      // TODO: Show error toast
+    } finally {
+      setSavingAnswers(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(questionId)
+        return newSet
+      })
+    }
+  }
+
+  // Group questions by main question
+  const groupQuestionsByMain = (questions: Question[]) => {
+    const grouped: Record<string, Question[]> = {}
+    
+    questions.forEach(question => {
+      if (question.type === 'main') {
+        // Main question is a group header
+        if (!grouped[question.questionNumber]) {
+          grouped[question.questionNumber] = []
+        }
+        grouped[question.questionNumber]!.unshift(question) // Add main question at beginning
+      } else {
+        // Find the main question this belongs to
+        let mainQuestionNumber = question.parentQuestionNumber
+        
+        // For subparts, we need to find the ultimate main question
+        if (question.type === 'subpart') {
+          const parentQuestion = questions.find(q => q.questionNumber === question.parentQuestionNumber)
+          if (parentQuestion && parentQuestion.type === 'subquestion') {
+            mainQuestionNumber = parentQuestion.parentQuestionNumber
+          }
+        }
+        
+        if (mainQuestionNumber) {
+          if (!grouped[mainQuestionNumber]) {
+            grouped[mainQuestionNumber] = []
+          }
+          grouped[mainQuestionNumber]!.push(question)
+        }
+      }
+    })
+    
+    return grouped
+  }
+
+  // Toggle main question collapse
+  const toggleMainQuestion = (mainQuestionNumber: string) => {
+    setCollapsedMainQuestions(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(mainQuestionNumber)) {
+        newSet.delete(mainQuestionNumber)
+      } else {
+        newSet.add(mainQuestionNumber)
+      }
+      return newSet
+    })
+  }
+
+  // Toggle chat expansion for a question
+  const toggleChat = (questionId: string) => {
+    setExpandedChats(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(questionId)) {
+        newSet.delete(questionId)
+      } else {
+        newSet.add(questionId)
+      }
+      return newSet
+    })
+  }
+
+  // Handle chat input changes
+  const handleChatInputChange = (questionId: string, message: string) => {
+    setChatInputs(prev => ({
+      ...prev,
+      [questionId]: message
+    }))
+  }
+
+  // Send chat message
+  const sendChatMessage = (questionId: string) => {
+    const message = chatInputs[questionId]
+    if (!message || !message.trim()) return
+
+    const newMessage: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      message: message.trim(),
+      timestamp: new Date(),
+      isUser: true
+    }
+
+    setQuestions(prev => prev.map(q => 
+      q.id === questionId 
+        ? { 
+            ...q, 
+            chatMessages: [...(q.chatMessages || []), newMessage] 
+          } 
+        : q
+    ))
+
+    setChatInputs(prev => ({
+      ...prev,
+      [questionId]: ''
+    }))
+
+    // TODO: Send to AI for response
+  }
+
+  // Mark all questions in current paper
+  const markAllQuestions = async () => {
+    if (!selectedPaper) return
+    
+    // TODO: Implement marking logic
+    console.log('Marking all questions for paper:', selectedPaper.filename)
+    console.log('User answers:', questions.map(q => ({ 
+      questionId: q.id, 
+      questionNumber: q.questionNumber,
+      userAnswer: q.userAnswer 
+    })))
   }
 
   // Upload paper handler
@@ -534,23 +804,23 @@ export default function SessionPage() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Papers Management */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Left Column - Documents Management */}
+        <div className="lg:col-span-1 space-y-6">
           {/* Upload New Paper */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Upload className="h-5 w-5 mr-2" />
+              <CardTitle className="flex items-center text-base">
+                <Upload className="h-4 w-4 mr-2" />
                 Upload Document
               </CardTitle>
-              <CardDescription>Upload PDF files for processing (question papers or mark schemes)</CardDescription>
+              <CardDescription className="text-sm">Upload PDF files for processing</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Document Type Selector */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Document Type</label>
-                <div className="flex space-x-4">
+                <div className="space-y-2">
                   <label className="flex items-center space-x-2 cursor-pointer">
                     <input
                       type="radio"
@@ -578,7 +848,7 @@ export default function SessionPage() {
 
               {/* Upload Area */}
               <div 
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
                   dragActive 
                     ? 'border-primary bg-primary/5' 
                     : 'border-muted-foreground/25 hover:border-muted-foreground/50'
@@ -588,8 +858,8 @@ export default function SessionPage() {
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
               >
-                <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground mb-4">
+                <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground mb-3 text-sm">
                   {dragActive 
                     ? `Drop your ${documentType === 'qsPaper' ? 'question paper' : 'mark scheme'} here` 
                     : `Drop your ${documentType === 'qsPaper' ? 'question paper' : 'mark scheme'} here, or click to browse`
@@ -605,6 +875,7 @@ export default function SessionPage() {
                 <Button 
                   disabled={uploadingPaper}
                   onClick={() => document.getElementById('file-upload')?.click()}
+                  size="sm"
                 >
                   {uploadingPaper ? (
                     <>
@@ -614,16 +885,12 @@ export default function SessionPage() {
                   ) : (
                     <>
                       <Upload className="h-4 w-4 mr-2" />
-                      Choose {documentType === 'qsPaper' ? 'Question Paper' : 'Mark Scheme'}
+                      Choose File
                     </>
                   )}
                 </Button>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Supports PDF files up to 50MB • 
-                  {documentType === 'qsPaper' 
-                    ? ' Questions will be extracted and parsed' 
-                    : ' Marking criteria will be extracted and linked to questions'
-                  }
+                  PDF files up to 50MB
                 </p>
               </div>
             </CardContent>
@@ -632,61 +899,51 @@ export default function SessionPage() {
           {/* Papers List */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <FileText className="h-5 w-5 mr-2" />
+              <CardTitle className="flex items-center text-base">
+                <FileText className="h-4 w-4 mr-2" />
                 Documents ({sessionData.papers.length})
               </CardTitle>
-              <CardDescription>Manage and process your uploaded documents (question papers and mark schemes)</CardDescription>
+              <CardDescription className="text-sm">Manage your uploaded documents</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3 max-h-96 overflow-y-auto">
                 {sessionData.papers.map((paper) => (
-                  <div key={paper.id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <h4 className="font-medium">{paper.filename}</h4>
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              paper.documentType === 'markScheme' 
-                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-                                : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                            }`}>
-                              {paper.documentType === 'markScheme' ? 'Mark Scheme' : 'Question Paper'}
-                            </span>
-                            {/* Link status indicator */}
-                            {paper.documentType === 'qsPaper' && paper.linkedMarkSchemeId && (
-                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 flex items-center">
-                                <Link2 className="h-3 w-3 mr-1" />
-                                Linked
+                  <div key={paper.id} className="border rounded-lg p-3 space-y-2">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2">
+                          <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-medium text-sm truncate">{paper.filename}</h4>
+                            <div className="flex flex-col space-y-1 mt-1">
+                              <span className={`px-2 py-1 text-xs font-medium rounded-full w-fit ${
+                                paper.documentType === 'markScheme' 
+                                  ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                                  : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                              }`}>
+                                {paper.documentType === 'markScheme' ? 'Mark Scheme' : 'Question Paper'}
                               </span>
-                            )}
+                              {paper.documentType === 'qsPaper' && paper.linkedMarkSchemeId && (
+                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 flex items-center w-fit">
+                                  <Link2 className="h-3 w-3 mr-1" />
+                                  Linked
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {paper.uploadedAt.toLocaleDateString()}
+                            </p>
                           </div>
-                          <p className="text-sm text-muted-foreground">
-                            Uploaded {paper.uploadedAt.toLocaleString()}
-                          </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <div className={`px-2 py-1 rounded text-xs font-medium flex items-center space-x-1 ${getStatusColor(paper.status)}`}>
-                          {getStatusIcon(paper.status)}
-                          <span>{paper.status}</span>
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => {
-                          setSelectedPaper(paper)
-                          loadQuestionsForPaper(paper.id)
-                        }}>
-                          <Target className="h-4 w-4" />
-                        </Button>
+                      <div className={`px-2 py-1 rounded text-xs font-medium flex items-center space-x-1 ${getStatusColor(paper.status)} flex-shrink-0 ml-2`}>
+                        {getStatusIcon(paper.status)}
+                        <span>{paper.status}</span>
                       </div>
                     </div>
                     
-                    {/* Paper Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    {/* Compact Stats */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
                         <span className="text-muted-foreground">
                           {paper.documentType === 'markScheme' ? 'Criteria:' : 'Questions:'}
@@ -699,71 +956,66 @@ export default function SessionPage() {
                         </span>
                         <span className="ml-1 font-medium">{paper.solvedQuestions}</span>
                       </div>
-                      {paper.accuracy && (
-                        <div>
-                          <span className="text-muted-foreground">
-                            {paper.documentType === 'markScheme' ? 'Match Rate:' : 'Accuracy:'}
-                          </span>
-                          <span className="ml-1 font-medium">{paper.accuracy}%</span>
-                        </div>
-                      )}
-                      {paper.processingTime && (
-                        <div>
-                          <span className="text-muted-foreground">Time:</span>
-                          <span className="ml-1 font-medium">{paper.processingTime}</span>
-                        </div>
-                      )}
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex items-center space-x-2">
-                      {paper.status === 'uploaded' && (
-                        <Button size="sm" onClick={() => processPaper(paper.id)}>
-                          <FileText className="h-4 w-4 mr-2" />
-                          {paper.documentType === 'markScheme' ? 'Process Mark Scheme' : 'Parse Paper'}
-                        </Button>
-                      )}
-                      {paper.status === 'parsed' && paper.documentType === 'qsPaper' && (
-                        <Button size="sm" onClick={() => solveQuestions(paper.id)}>
-                          <Brain className="h-4 w-4 mr-2" />
-                          Solve Questions
-                        </Button>
-                      )}
-                      {paper.status === 'solved' && (
-                        <Button size="sm" variant="outline">
-                          <Download className="h-4 w-4 mr-2" />
-                          {paper.documentType === 'markScheme' ? 'Export Criteria' : 'Export Solutions'}
-                        </Button>
-                      )}
-                      
-                      {/* Link/Unlink buttons for question papers */}
-                      {paper.documentType === 'qsPaper' && (
-                        paper.linkedMarkSchemeId ? (
+                    {/* Compact Action Buttons */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-1">
+                        {paper.status === 'uploaded' && (
+                          <Button size="sm" onClick={() => processPaper(paper.id)} className="h-7 px-2 text-xs">
+                            <FileText className="h-3 w-3 mr-1" />
+                            {paper.documentType === 'markScheme' ? 'Process' : 'Parse'}
+                          </Button>
+                        )}
+                        {paper.status === 'parsed' && paper.documentType === 'qsPaper' && (
+                          <Button size="sm" onClick={() => solveQuestions(paper.id)} className="h-7 px-2 text-xs">
+                            <Brain className="h-3 w-3 mr-1" />
+                            Solve
+                          </Button>
+                        )}
+                        {paper.documentType === 'qsPaper' && (
                           <Button 
                             size="sm" 
-                            variant="outline"
-                            onClick={() => unlinkFiles(paper.id)}
-                            className="text-orange-600 hover:text-orange-700"
+                            variant="ghost"
+                            onClick={() => {
+                              setSelectedPaper(paper)
+                              loadQuestionsForPaper(paper.id)
+                            }}
+                            className="h-7 px-2 text-xs"
                           >
-                            <Link2Off className="h-4 w-4 mr-2" />
-                            Unlink
+                            <Target className="h-3 w-3" />
                           </Button>
-                        ) : (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => openLinkModal(paper.id)}
-                            className="text-blue-600 hover:text-blue-700"
-                          >
-                            <Link2 className="h-4 w-4 mr-2" />
-                            Link MS
-                          </Button>
-                        )
-                      )}
+                        )}
+                      </div>
                       
-                      <Button size="sm" variant="ghost">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center space-x-1">
+                        {/* Link/Unlink buttons for question papers */}
+                        {paper.documentType === 'qsPaper' && (
+                          paper.linkedMarkSchemeId ? (
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => unlinkFiles(paper.id)}
+                              className="h-7 px-2 text-xs text-orange-600 hover:text-orange-700"
+                            >
+                              <Link2Off className="h-3 w-3" />
+                            </Button>
+                          ) : (
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => openLinkModal(paper.id)}
+                              className="h-7 px-2 text-xs text-blue-600 hover:text-blue-700"
+                            >
+                              <Link2 className="h-3 w-3" />
+                            </Button>
+                          )
+                        )}
+                        
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -771,61 +1023,359 @@ export default function SessionPage() {
             </CardContent>
           </Card>
 
-          {/* Questions Preview */}
-          {selectedPaper && questions.length > 0 && (
+        </div>
+
+        {/* Main Content - Questions & Answers */}
+        <div className="lg:col-span-2 space-y-6">
+          {sessionData.papers.filter(p => p.documentType === 'qsPaper').length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Brain className="h-5 w-5 mr-2" />
-                  Questions & Solutions
+                  Questions & Answers
                 </CardTitle>
                 <CardDescription>
-                  Viewing questions from {selectedPaper.filename}
+                  Answer questions and chat with AI for help
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {questions.map((question) => (
-                    <div key={question.id} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="font-medium text-lg">Question {question.questionNumber}</h4>
-                          <span className="text-sm text-muted-foreground">{question.marks} marks</span>
-                        </div>
-                        <div className={`px-2 py-1 rounded text-xs font-medium flex items-center space-x-1 ${getStatusColor(question.status)}`}>
-                          {getStatusIcon(question.status)}
-                          <span>{question.status}</span>
-                        </div>
-                      </div>
-                      
-                      <p className="mb-4">{question.text}</p>
-                      
-                      {question.solution && (
-                        <div className="bg-muted rounded-lg p-4">
-                          <h5 className="font-medium mb-2 flex items-center">
-                            <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                            Solution (Confidence: {question.solution.confidence}%)
-                          </h5>
-                          <ol className="list-decimal list-inside space-y-1 mb-3 text-sm">
-                            {question.solution.steps.map((step, index) => (
-                              <li key={index}>{step}</li>
-                            ))}
-                          </ol>
-                          <div className="bg-background rounded p-3 border-l-4 border-green-500">
-                            <strong>Final Answer: {question.solution.finalAnswer}</strong>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+              
+              {/* Paper Tabs */}
+              <div className="border-b px-6">
+                <div className="flex space-x-1 overflow-x-auto">
+                  {sessionData.papers
+                    .filter(p => p.documentType === 'qsPaper')
+                    .map((paper) => (
+                      <button
+                        key={paper.id}
+                        onClick={() => {
+                          setActiveTab(paper.id)
+                          setSelectedPaper(paper)
+                          loadQuestionsForPaper(paper.id)
+                        }}
+                        className={`px-4 py-2 text-sm font-medium rounded-t-lg whitespace-nowrap transition-colors ${
+                          activeTab === paper.id
+                            ? 'bg-primary text-primary-foreground'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                        }`}
+                      >
+                        {(paper.filename.split('.')[0] || paper.filename).slice(0, 20)}
+                        {paper.filename.length > 20 && '...'}
+                      </button>
+                    ))}
                 </div>
+              </div>
+
+              <CardContent className="p-6">
+                {questions.length > 0 ? (
+                  <div className="space-y-6">
+                    {Object.entries(groupQuestionsByMain(questions)).map(([mainQuestionNumber, questionGroup]) => (
+                      <div key={mainQuestionNumber} className="border rounded-lg bg-card">
+                        {/* Main Question Header - Collapsible */}
+                        <div className="p-4 border-b bg-muted/50">
+                          <button
+                            onClick={() => toggleMainQuestion(mainQuestionNumber)}
+                            className="flex items-center justify-between w-full text-left"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="flex items-center space-x-2">
+                                {collapsedMainQuestions.has(mainQuestionNumber) ? (
+                                  <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                  <ChevronUp className="h-4 w-4" />
+                                )}
+                                <h3 className="font-semibold text-lg">Question {mainQuestionNumber}</h3>
+                              </div>
+                              <span className="text-sm text-muted-foreground">
+                                ({questionGroup.length} part{questionGroup.length !== 1 ? 's' : ''})
+                              </span>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {questionGroup.filter(q => q.userAnswer || q.detectedAnswer?.answer).length}/{questionGroup.length} answered
+                            </div>
+                          </button>
+                        </div>
+
+                        {/* Question Parts - Collapsible Content */}
+                        {!collapsedMainQuestions.has(mainQuestionNumber) && (
+                          <div className="divide-y">
+                            {questionGroup.map((question) => (
+                              <div key={question.id} className="p-6">
+                                {/* Question Header */}
+                                <div className="flex items-start justify-between mb-4">
+                                  <div>
+                                    <h4 className="font-medium text-lg flex items-center space-x-2">
+                                      <span>Question {question.questionNumber}</span>
+                                      {question.isMultipleChoice && (
+                                        <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">
+                                          MCQ
+                                        </span>
+                                      )}
+                                    </h4>
+                                    <span className="text-sm text-muted-foreground">{question.marks} marks</span>
+                                    {question.imageDescription && (
+                                      <p className="text-xs text-muted-foreground mt-1 italic">
+                                        📷 {question.imageDescription}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className={`px-2 py-1 rounded text-xs font-medium flex items-center space-x-1 ${getStatusColor(question.status)}`}>
+                                    {getStatusIcon(question.status)}
+                                    <span>{question.status}</span>
+                                  </div>
+                                </div>
+                                
+                                {/* Question Text */}
+                                <div className="mb-6 p-4 bg-muted rounded-lg">
+                                  <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-foreground">
+                                    <ReactMarkdown
+                                      remarkPlugins={[remarkMath]}
+                                      rehypePlugins={[rehypeKatex]}
+                                    >
+                                      {question.text}
+                                    </ReactMarkdown>
+                                  </div>
+                                </div>
+                                
+                                {/* Answer Section */}
+                                <div className="mb-6">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <label className="text-sm font-medium">
+                                      {question.isMultipleChoice ? 'Your Selection:' : 'Your Answer:'}
+                                    </label>
+                                    <div className="flex items-center space-x-2">
+                                      {editingAnswers.has(question.id) && (
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={() => toggleAnswerEdit(question.id)}
+                                          disabled={savingAnswers.has(question.id)}
+                                        >
+                                          <X className="h-4 w-4 mr-2" />
+                                          Cancel
+                                        </Button>
+                                      )}
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => editingAnswers.has(question.id) ? saveAnswerEdit(question.id) : toggleAnswerEdit(question.id)}
+                                        disabled={savingAnswers.has(question.id)}
+                                      >
+                                        {savingAnswers.has(question.id) ? (
+                                          <>
+                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                            Saving...
+                                          </>
+                                        ) : editingAnswers.has(question.id) ? (
+                                          <>
+                                            <Save className="h-4 w-4 mr-2" />
+                                            Save
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Edit className="h-4 w-4 mr-2" />
+                                            Edit
+                                          </>
+                                        )}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  
+                                  {editingAnswers.has(question.id) ? (
+                                    // Editing Mode
+                                    <div className="space-y-3">
+                                      {question.isMultipleChoice && question.detectedAnswer?.choices ? (
+                                        // MCQ Editing Mode
+                                        <div className="space-y-2">
+                                          {question.detectedAnswer.choices.map((choice, index) => (
+                                            <label key={index} className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
+                                              <input
+                                                type="radio"
+                                                name={`question-${question.id}`}
+                                                value={choice}
+                                                checked={tempAnswers[question.id] === choice}
+                                                onChange={(e) => handleTempAnswerChange(question.id, e.target.value)}
+                                                className="w-4 h-4 text-primary"
+                                              />
+                                              <span className="flex-1">{choice}</span>
+                                            </label>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        // Text Editing Mode
+                                        <div className="space-y-2">
+                                          <textarea
+                                            value={tempAnswers[question.id] || ''}
+                                            onChange={(e) => handleTempAnswerChange(question.id, e.target.value)}
+                                            placeholder="Enter your answer here... (Supports Markdown and LaTeX)"
+                                            className="w-full min-h-[8rem] max-h-64 p-3 border rounded-lg resize-y focus:ring-2 focus:ring-primary focus:border-transparent font-mono text-sm"
+                                            rows={4}
+                                          />
+                                          <p className="text-xs text-muted-foreground">
+                                            Supports Markdown and LaTeX. Use $...$ for inline math or $$...$$ for display math.
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    // Display Mode
+                                    <div className="min-h-[6rem] p-3 border rounded-lg bg-background overflow-auto">
+                                      {question.userAnswer || question.detectedAnswer?.answer ? (
+                                        question.isMultipleChoice && question.detectedAnswer?.choices ? (
+                                          // MCQ Display Mode
+                                          <div className="space-y-2">
+                                            <p className="font-medium text-sm text-muted-foreground mb-3">Available choices:</p>
+                                            {question.detectedAnswer.choices.map((choice, index) => (
+                                              <div 
+                                                key={index} 
+                                                className={`p-2 border rounded ${
+                                                  (question.userAnswer || question.detectedAnswer?.answer) === choice
+                                                    ? 'border-primary bg-primary/10 font-medium'
+                                                    : 'border-muted'
+                                                }`}
+                                              >
+                                                <span className="flex items-center space-x-2">
+                                                  <span className="w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs">
+                                                    {String.fromCharCode(65 + index)}
+                                                  </span>
+                                                  <span>{choice}</span>
+                                                  {(question.userAnswer || question.detectedAnswer?.answer) === choice && (
+                                                    <CheckCircle className="h-4 w-4 text-primary ml-auto" />
+                                                  )}
+                                                </span>
+                                              </div>
+                                            ))}
+                                            <p className="text-sm text-muted-foreground mt-3">
+                                              Selected: <span className="font-medium">{question.userAnswer || question.detectedAnswer?.answer}</span>
+                                            </p>
+                                          </div>
+                                        ) : (
+                                          // Text Display Mode
+                                          <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-foreground">
+                                            <ReactMarkdown
+                                              remarkPlugins={[remarkMath]}
+                                              rehypePlugins={[rehypeKatex]}
+                                            >
+                                              {question.userAnswer || question.detectedAnswer?.answer || ''}
+                                            </ReactMarkdown>
+                                          </div>
+                                        )
+                                      ) : (
+                                        <p className="text-muted-foreground italic">No answer detected. Click Edit to add your answer.</p>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Chat Section */}
+                                <div className="border-t pt-4">
+                                  <button
+                                    onClick={() => toggleChat(question.id)}
+                                    className="flex items-center space-x-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                                  >
+                                    <MessageCircle className="h-4 w-4" />
+                                    <span>Chat with AI about this question</span>
+                                    {expandedChats.has(question.id) ? (
+                                      <ChevronUp className="h-4 w-4" />
+                                    ) : (
+                                      <ChevronDown className="h-4 w-4" />
+                                    )}
+                                  </button>
+
+                                  {expandedChats.has(question.id) && (
+                                    <div className="mt-4 border rounded-lg bg-background">
+                                      {/* Chat Messages */}
+                                      <div className="p-4 max-h-48 overflow-y-auto">
+                                        {question.chatMessages && question.chatMessages.length > 0 ? (
+                                          <div className="space-y-3">
+                                            {question.chatMessages.map((msg) => (
+                                              <div
+                                                key={msg.id}
+                                                className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}
+                                              >
+                                                <div
+                                                  className={`max-w-xs px-3 py-2 rounded-lg text-sm ${
+                                                    msg.isUser
+                                                      ? 'bg-primary text-primary-foreground'
+                                                      : 'bg-muted text-foreground'
+                                                  }`}
+                                                >
+                                                  <p>{msg.message}</p>
+                                                  <p className="text-xs mt-1 opacity-70">
+                                                    {msg.timestamp.toLocaleTimeString()}
+                                                  </p>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <p className="text-sm text-muted-foreground text-center py-4">
+                                            No messages yet. Ask a question about this problem!
+                                          </p>
+                                        )}
+                                      </div>
+
+                                      {/* Chat Input */}
+                                      <div className="border-t p-4">
+                                        <div className="flex space-x-2">
+                                          <input
+                                            type="text"
+                                            value={chatInputs[question.id] || ''}
+                                            onChange={(e) => handleChatInputChange(question.id, e.target.value)}
+                                            placeholder="Ask a question about this problem..."
+                                            className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            onKeyPress={(e) => {
+                                              if (e.key === 'Enter') {
+                                                sendChatMessage(question.id)
+                                              }
+                                            }}
+                                          />
+                                          <Button
+                                            size="sm"
+                                            onClick={() => sendChatMessage(question.id)}
+                                            disabled={!chatInputs[question.id]?.trim()}
+                                          >
+                                            <Send className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+
+                    {/* Mark All Button */}
+                    <div className="pt-6 border-t">
+                      <Button
+                        onClick={markAllQuestions}
+                        className="w-full py-3 text-lg font-medium"
+                        size="lg"
+                      >
+                        <GraduationCap className="h-5 w-5 mr-2" />
+                        Mark All Questions
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Brain className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Questions Available</h3>
+                    <p className="text-muted-foreground">
+                      {selectedPaper ? 'This paper has no questions yet.' : 'Select a question paper to view questions.'}
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
         </div>
 
-        {/* Right Column - Session Stats */}
-        <div className="space-y-6">
+        {/* Right Column - Session Stats (Reduced) */}
+        <div className="lg:col-span-1 space-y-6">
           {/* Session Overview */}
           <Card>
             <CardHeader>
@@ -903,27 +1453,6 @@ export default function SessionPage() {
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button variant="outline" className="w-full justify-start">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload New Paper
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Brain className="h-4 w-4 mr-2" />
-                Solve All Questions
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Download className="h-4 w-4 mr-2" />
-                Export Results
-              </Button>
             </CardContent>
           </Card>
         </div>
