@@ -24,6 +24,8 @@ export function DashboardContent({ activeTab }: DashboardContentProps) {
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [sessionToDelete, setSessionToDelete] = useState<Session | null>(null)
 
   // Load sessions from database
   useEffect(() => {
@@ -79,15 +81,31 @@ export function DashboardContent({ activeTab }: DashboardContentProps) {
     }
   }
 
-  // Delete a session
-  const deleteSession = async (sessionId: string) => {
+  // Show delete confirmation
+  const confirmDeleteSession = (session: Session) => {
+    setSessionToDelete(session)
+    setShowDeleteConfirm(true)
+  }
+
+  // Cancel delete
+  const cancelDelete = () => {
+    setSessionToDelete(null)
+    setShowDeleteConfirm(false)
+  }
+
+  // Delete a session (after confirmation)
+  const deleteSession = async () => {
+    if (!sessionToDelete) return
+
     try {
-      const response = await fetch(`/api/sessions?id=${sessionId}`, {
+      const response = await fetch(`/api/sessions?id=${sessionToDelete.id}`, {
         method: 'DELETE'
       })
 
       if (response.ok) {
-        setSessions(prev => prev.filter(session => session.id !== sessionId))
+        setSessions(prev => prev.filter(session => session.id !== sessionToDelete.id))
+        setShowDeleteConfirm(false)
+        setSessionToDelete(null)
       } else {
         setError('Failed to delete session')
       }
@@ -167,7 +185,7 @@ export function DashboardContent({ activeTab }: DashboardContentProps) {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  deleteSession(session.id);
+                                  confirmDeleteSession(session);
                                 }}
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -345,6 +363,46 @@ export function DashboardContent({ activeTab }: DashboardContentProps) {
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       {renderContent()}
+      
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && sessionToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4 border shadow-lg">
+            <h3 className="text-lg font-semibold mb-4 text-destructive">
+              Delete Session
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Are you sure you want to delete "<strong>{sessionToDelete.name}</strong>"? 
+              This action will permanently remove:
+            </p>
+            <ul className="text-sm text-muted-foreground mb-6 space-y-1 ml-4">
+              <li>• All uploaded documents ({sessionToDelete.fileCount || 0} files)</li>
+              <li>• All extracted questions and answers</li>
+              <li>• All session progress and history</li>
+            </ul>
+            <p className="text-sm font-medium text-destructive mb-6">
+              This action cannot be undone.
+            </p>
+            
+            <div className="flex space-x-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={cancelDelete}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={deleteSession}
+              >
+                Delete Session
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

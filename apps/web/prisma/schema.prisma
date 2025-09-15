@@ -38,16 +38,24 @@ model ProcessorSession {
 
 model Questions {
     id                    String   @id @default(cuid())
-    questionNumber        String   // "1", "2(a)", "3b(i)", etc.
+    questionNumber        String  // "1", "2(a)", "3b(i)", etc.
     question              String   @db.Text
     type                  String   // "main", "subquestion", "subpart"
-    parentQuestionNumber  String?  // Parent question identifier
+    parentQuestionNumber  String? // Parent question identifier
     isMultipleChoice      Boolean  @default(false)
     imageDescription      String?  @db.Text
-    answer                Json?    // Stores answer object (text or mcq format)
+    answer                Json?    // Stores detected OCR answer object (text or mcq format)
+    userAnswer            Json?    // Stores user's submitted answer for assessment
     pageNumber            Int
     semanticSummary       String   @db.Text // For search purposes
-    
+    maxMarks              Int?     // Total marks available for this question
+
+    // Assessment fields
+    marked                Boolean  @default(false) // Whether this question has been assessed
+    modelAnswer           String?  @db.Text // The correct answer from mark scheme or generated
+    marksAwarded          Int?     // Actual marks awarded to user
+    feedback              String?  @db.Text // Detailed assessment feedback
+
     // Store vector embedding as TEXT for TiDB compatibility
     vectorEmbedding       String?  @db.Text // Will be converted to VECTOR(1536) in TiDB
     
@@ -65,11 +73,13 @@ model Questions {
     @@index([type])
     @@index([fileId])
     @@index([isMultipleChoice])
+    @@index([marked])
 }
 
 model MsQuestions {
     id                    String   @id @default(cuid())
     questionNumber        String   // "1", "2(a)", "3b(i)" - matches original question
+    parentQuestionNumber  String?  // Parent question identifier
     markingCriteria       String   @db.Text // Detailed marking criteria/rubric
     maxMarks              Int      // Total marks available for this question
     markBreakdown         Json?    // Simple mark allocation (e.g., {"method": 2, "accuracy": 3})

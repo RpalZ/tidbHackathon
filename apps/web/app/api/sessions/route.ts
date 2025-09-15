@@ -119,7 +119,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // Verify ownership and delete
+    // Verify ownership
     const processorSession = await prisma.processorSession.findFirst({
       where: {
         id: sessionId,
@@ -134,11 +134,49 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    await prisma.processorSession.delete({
-      where: { id: sessionId }
+    // Perform cascade deletion in correct order using transaction
+    await prisma.$transaction(async (tx) => {
+      console.log(`Starting cascade deletion for session: ${sessionId}`)
+
+      // 1. Delete all questions related to files in this session
+      const deletedQuestions = await tx.questions.deleteMany({
+        where: {
+          file: {
+            processorSessionId: sessionId
+          }
+        }
+      })
+      console.log(`Deleted ${deletedQuestions.count} questions`)
+
+      // 2. Delete all mark scheme questions related to files in this session  
+      const deletedMsQuestions = await tx.msQuestions.deleteMany({
+        where: {
+          file: {
+            processorSessionId: sessionId
+          }
+        }
+      })
+      console.log(`Deleted ${deletedMsQuestions.count} mark scheme questions`)
+
+      // 3. Delete all files in this session (including their content/blobs)
+      const deletedFiles = await tx.file.deleteMany({
+        where: {
+          processorSessionId: sessionId
+        }
+      })
+      console.log(`Deleted ${deletedFiles.count} files`)
+
+      // 4. Finally delete the session itself
+      await tx.processorSession.delete({
+        where: { id: sessionId }
+      })
+      console.log(`Deleted session: ${sessionId}`)
     })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ 
+      success: true,
+      message: 'Session and all related data deleted successfully'
+    })
   } catch (error) {
     console.error('Error deleting session:', error)
     return NextResponse.json(

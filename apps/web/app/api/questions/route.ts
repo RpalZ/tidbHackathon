@@ -38,12 +38,19 @@ export async function GET(request: NextRequest) {
         id: q.id,
         questionNumber: q.questionNumber,
         text: q.question,
-        marks: 3, // Default marks - you might want to add this to schema
+        marks: q.maxMarks, // Default marks - you might want to add this to schema
         type: q.type, // "main", "subquestion", "subpart"
         parentQuestionNumber: q.parentQuestionNumber,
         isMultipleChoice: q.isMultipleChoice,
         imageDescription: q.imageDescription,
         pageNumber: q.pageNumber,
+        
+        // Assessment fields
+        marked: q.marked,
+        modelAnswer: q.modelAnswer,
+        marksAwarded: q.marksAwarded,
+        feedback: q.feedback,
+        
         // Parse the JSON answer field according to the Zod structure
         detectedAnswer: q.answer ? (
           q.isMultipleChoice ? {

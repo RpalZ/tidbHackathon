@@ -279,7 +279,7 @@
       "imageDescription": "Schematic of simple d.c. motor with coil, split ring, brushes and magnetic poles.",
       "answer": {
         "type": "text",
-        "answer": "(a) Current flows in the coil so sides experience forces in opposite directions due to the magnetic field (F = BIL), producing a torque about the axis; after half a turn the split-ring commutator reverses the connection so the current direction in the coil reverses and the torque continues to rotate the coil in the same direction. (b) Student answer: Work done by resistive forces = 8.0×10^5 J. (c) Increased internal resistance reduces terminal pd and therefore the current available to the motor, reducing acceleration and useful power."
+        "answer": "(a) Current flows in the coil so sides experience forces in opposite directions due to the magnetic field (F = BIL), producing a torque about the axis; after half a turn the split-ring commutator reverses the connection so the current direction in the coil reverses and the torque continues to rotate the coil in the same direction. "
       },
       "pageNumber": 16,
       "semanticSummary": "Explain motor torque and commutation; student computed resistive-work ≈ 8.0×10^5 J; increased internal resistance reduces terminal voltage/current and performance."

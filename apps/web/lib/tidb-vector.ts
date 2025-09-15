@@ -16,6 +16,8 @@
 
 import { prisma } from '@/lib/prisma'
 import OpenAI from 'openai'
+import { zodTextFormat } from 'openai/helpers/zod.mjs'
+import { z } from 'zod'
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -134,10 +136,11 @@ export async function insertQuestionWithVector(
     questionNumber: string
     question: string
     type: string
-    parentQuestionNumber?: string
+    parentQuestionNumber?: string | null
     isMultipleChoice: boolean
     imageDescription?: string
     answer: any
+    maxMarks: number
     pageNumber: number
     semanticSummary: string
   },
@@ -158,6 +161,7 @@ export async function insertQuestionWithVector(
         isMultipleChoice: questionData.isMultipleChoice,
         imageDescription: questionData.imageDescription,
         answer: questionData.answer,
+        maxMarks: questionData.maxMarks,
         pageNumber: questionData.pageNumber,
         semanticSummary: questionData.semanticSummary,
         fileId: fileId,
@@ -275,7 +279,8 @@ export async function batchInsertQuestionsWithVectors(
     parentQuestionNumber?: string
     isMultipleChoice: boolean
     imageDescription?: string
-    answer: any
+    answer: any,
+    maxMarks: number,
     pageNumber: number
     semanticSummary: string
   }>,
@@ -294,7 +299,7 @@ export async function batchInsertQuestionsWithVectors(
   }
 
   // Process in batches of 5 to avoid API rate limits
-  const batchSize = 5
+  const batchSize = 10
   for (let i = 0; i < questionsData.length; i += batchSize) {
     const batch = questionsData.slice(i, i + batchSize)
     
@@ -330,6 +335,7 @@ export async function batchInsertQuestionsWithVectors(
 export async function insertMarkSchemeWithVector(
   markSchemeData: {
     questionNumber: string
+    parentQuestionNumber?: string | null
     markingCriteria: string
     maxMarks: number
     markBreakdown?: any
@@ -349,6 +355,7 @@ export async function insertMarkSchemeWithVector(
     const markScheme = await prisma.msQuestions.create({
       data: {
         questionNumber: markSchemeData.questionNumber,
+        parentQuestionNumber: markSchemeData.parentQuestionNumber,
         markingCriteria: markSchemeData.markingCriteria,
         maxMarks: markSchemeData.maxMarks,
         markBreakdown: markSchemeData.markBreakdown,
@@ -387,6 +394,7 @@ export async function insertMarkSchemeWithVector(
 export async function batchInsertMarkSchemesWithVectors(
   markSchemesData: Array<{
     questionNumber: string
+    parentQuestionNumber: string | null
     markingCriteria: string
     maxMarks: number
     markBreakdown?: any
@@ -621,5 +629,401 @@ export async function initializeTiDBVectors(): Promise<void> {
   } else {
     console.error('❌ TiDB Vector initialization failed:', result.message)
     throw new Error(result.message)
+  }
+}
+
+/**
+ * Find mark scheme by exact question number match (1-to-1 reference)
+ * 
+ * @param questionNumber - The question number to match exactly
+ * @param fileId - Optional: limit search to specific mark scheme file
+ * @returns Mark scheme object if found, null otherwise
+ */
+export async function findMarkSchemeByQuestionNumber(
+  questionNumber: string,
+  fileId?: string
+): Promise<{
+  id: string
+  questionNumber: string
+  markingCriteria: string
+  maxMarks: number
+  markBreakdown: any
+  acceptableAnswers: string[] | null
+  keywords: string[] | null
+  semanticSummary: string
+} | null> {
+  try {
+    const markScheme = await prisma.msQuestions.findFirst({
+      where: {
+        questionNumber: questionNumber,
+        ...(fileId && { fileId: fileId })
+      }
+    })
+
+    if (!markScheme) return null
+
+    return {
+      id: markScheme.id,
+      questionNumber: markScheme.questionNumber,
+      markingCriteria: markScheme.markingCriteria,
+      maxMarks: markScheme.maxMarks,
+      markBreakdown: markScheme.markBreakdown,
+      acceptableAnswers: markScheme.acceptableAnswers as string[] | null,
+      keywords: markScheme.keywords as string[] | null,
+      semanticSummary: markScheme.semanticSummary
+    }
+  } catch (error) {
+    console.error('Failed to find mark scheme by question number:', error)
+    return null
+  }
+}
+
+/**
+ * Search for mark schemes using vector similarity (fallback method)
+ * 
+ * @param searchQuery - Question text or semantic summary to match
+ * @param fileId - Optional: limit search to specific mark scheme file
+ * @param threshold - Minimum similarity score (default: 0.7)
+ * @returns Array of mark schemes with similarity scores
+ */
+export async function searchSimilarMarkSchemes(
+  searchQuery: string,
+  fileId?: string,
+  threshold: number = 0.7
+): Promise<Array<{
+  id: string
+  questionNumber: string
+  markingCriteria: string
+  maxMarks: number
+  markBreakdown: any
+  acceptableAnswers: string[] | null
+  keywords: string[] | null
+  semanticSummary: string
+  similarity: number
+}>> {
+  try {
+    // Generate embedding for search query
+    const queryEmbedding = await generateEmbedding(searchQuery)
+    const queryVectorString = vectorToString(queryEmbedding)
+
+    // Build SQL query with optional file filtering
+    const fileFilter = fileId ? 'AND fileId = ?' : ''
+    const params = [
+      queryVectorString, // for distance calculation
+      queryVectorString, // for similarity calculation
+      ...(fileId ? [fileId] : []),
+      queryVectorString, // for WHERE clause
+      threshold,
+      5 // limit to top 5 matches
+    ]
+
+    const searchSQL = `
+      SELECT 
+        id,
+        questionNumber,
+        markingCriteria,
+        maxMarks,
+        markBreakdown,
+        acceptableAnswers,
+        keywords,
+        semanticSummary,
+        vec_cosine_distance(vectorEmbedding, ?) as distance,
+        (1 - vec_cosine_distance(vectorEmbedding, ?)) as similarity
+      FROM MsQuestions
+      WHERE vectorEmbedding IS NOT NULL
+        ${fileFilter}
+        AND (1 - vec_cosine_distance(vectorEmbedding, ?)) >= ?
+      ORDER BY distance ASC
+      LIMIT ?
+    `
+
+    const results = await executeVectorSQL(searchSQL, params)
+
+    return results.map((row: any) => ({
+      id: row.id,
+      questionNumber: row.questionNumber,
+      markingCriteria: row.markingCriteria,
+      maxMarks: row.maxMarks,
+      markBreakdown: row.markBreakdown,
+      acceptableAnswers: row.acceptableAnswers ? JSON.parse(row.acceptableAnswers) : null,
+      keywords: row.keywords ? JSON.parse(row.keywords) : null,
+      semanticSummary: row.semanticSummary,
+      similarity: Math.round(row.similarity * 10000) / 10000
+    }))
+  } catch (error) {
+    console.error('Vector search for mark schemes failed:', error)
+    return []
+  }
+}
+
+/**
+ * Find the best matching mark scheme using 1-to-1 reference first, then vector search
+ * 
+ * @param questionId - ID of the question to find mark scheme for
+ * @param fallbackSearch - Whether to use vector search if no exact match found
+ * @returns Best matching mark scheme or null
+ */
+export async function findBestMarkScheme(
+  questionId: string,
+  fallbackSearch: boolean = true
+): Promise<{
+  id: string
+  questionNumber: string
+  markingCriteria: string
+  maxMarks: number
+  markBreakdown: any
+  acceptableAnswers: string[] | null
+  keywords: string[] | null
+  semanticSummary: string
+  matchType: '1-to-1' | 'vector-search'
+  similarity?: number
+} | null> {
+  try {
+    // Get the question details
+    const question = await prisma.questions.findUnique({
+      where: { id: questionId },
+      include: { 
+        file: { 
+          include: { linkedMarkScheme: true } 
+        } 
+      }
+    })
+
+    if (!question) {
+      throw new Error('Question not found')
+    }
+
+    // Step 1: Try 1-to-1 reference match
+    const markSchemeFileId = question.file?.linkedMarkScheme?.id
+    if (markSchemeFileId) {
+      const exactMatch = await findMarkSchemeByQuestionNumber(
+        question.questionNumber,
+        markSchemeFileId
+      )
+
+      if (exactMatch) {
+        return {
+          ...exactMatch,
+          matchType: '1-to-1'
+        }
+      }
+    }
+
+    // Step 2: Fallback to vector search if no exact match
+    if (fallbackSearch) {
+      const searchQuery = `${question.question} ${question.semanticSummary}`
+      const vectorMatches = await searchSimilarMarkSchemes(
+        searchQuery,
+        markSchemeFileId, // Prefer linked mark scheme file if available
+        0.7 // 70% similarity threshold
+      )
+
+      if (vectorMatches.length > 0) {
+        const bestMatch = vectorMatches[0]
+        // Ensure all required fields are present
+        if (bestMatch?.id && bestMatch?.questionNumber && bestMatch?.markingCriteria && typeof bestMatch?.maxMarks === 'number') {
+          return {
+            id: bestMatch.id,
+            questionNumber: bestMatch.questionNumber,
+            markingCriteria: bestMatch.markingCriteria,
+            maxMarks: bestMatch.maxMarks,
+            markBreakdown: bestMatch.markBreakdown || null,
+            acceptableAnswers: bestMatch.acceptableAnswers || null,
+            keywords: bestMatch.keywords || null,
+            semanticSummary: bestMatch.semanticSummary || '',
+            matchType: 'vector-search' as const,
+            similarity: bestMatch.similarity
+          }
+        }
+      }
+    }
+
+    return null
+  } catch (error) {
+    console.error('Failed to find best mark scheme:', error)
+    return null
+  }
+}
+
+/**
+ * Find mark scheme for a question using 1-to-1 reference match and vector search fallback
+ * 
+ * @param questionId - ID of the question to find mark scheme for
+ * @param linkedMarkSchemeFileId - Optional: ID of linked mark scheme file for targeted search
+ * @returns Best matching mark scheme with match type
+ */
+export async function findMarkSchemeForQuestion(
+  questionId: string,
+  linkedMarkSchemeFileId?: string
+): Promise<any> {
+  try {
+    return await findBestMarkScheme(questionId, true)
+  } catch (error) {
+    console.error('Failed to find mark scheme for question:', error)
+    return null
+  }
+}
+
+/**
+ * Generate model answer from mark scheme or using AI
+ * 
+ * @param markScheme - Mark scheme object
+ * @param question - Question object
+ * @returns Generated model answer
+ */
+export async function generateModelAnswer(
+  markScheme: any,
+  question: any
+): Promise<string> {
+  try {
+    // First check if acceptable answers exist in mark scheme
+    if (markScheme.acceptableAnswers && markScheme.acceptableAnswers.length > 0) {
+      // Use the first acceptable answer as model answer
+      return markScheme.acceptableAnswers[0]
+    }
+
+    // If no acceptable answers, generate using AI based on marking criteria
+    const prompt = `
+Based on this mark scheme, generate a comprehensive model answer for the question:
+
+Question: ${question.question}
+Question Type: ${question.type}
+Max Marks: ${markScheme.maxMarks}
+
+Marking Criteria: ${markScheme.markingCriteria}
+Keywords: ${markScheme.keywords ? JSON.stringify(markScheme.keywords) : 'None specified'}
+Mark Breakdown: ${markScheme.markBreakdown ? JSON.stringify(markScheme.markBreakdown) : 'None specified'}
+
+Generate a complete, well-structured model answer that would achieve full marks according to the marking criteria. Include all key concepts and terminology mentioned in the keywords.
+`
+
+    const response = await openai.responses.create({
+      model: "gpt-5-mini",
+      input: [
+        {
+          role: "system",
+          content: "You are an expert educator generating model answers for exam questions. Create comprehensive, accurate answers that demonstrate full understanding and would achieve maximum marks."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      max_output_tokens: 1000,
+    })
+
+    return response as unknown as string|| "Unable to generate model answer"
+  } catch (error) {
+    console.error('Failed to generate model answer:', error)
+    return "Error generating model answer"
+  }
+}
+
+/**
+ * Assess user's answer against mark scheme using AI
+ * 
+ * @param userAnswer - User's submitted answer
+ * @param markScheme - Mark scheme object
+ * @param question - Question object
+ * @param modelAnswer - Generated model answer
+ * @returns Assessment result with marks and feedback
+ */
+export async function assessUserAnswer(
+  userAnswer: string,
+  markScheme: any,
+  question: any,
+  modelAnswer: string
+): Promise<{
+  marksAwarded: number,
+  feedback: string,
+  keywordMatches: string[],
+  missingKeywords: string[]
+}> {
+  try {
+    const prompt = `
+You are an expert examiner assessing a student's answer. Provide detailed marking and feedback.
+
+QUESTION:
+${question.question}
+Type: ${question.type}
+Max Marks: ${markScheme.maxMarks}
+
+MARKING CRITERIA:
+${markScheme.markingCriteria}
+
+MARK BREAKDOWN:
+${markScheme.markBreakdown ? JSON.stringify(markScheme.markBreakdown) : 'Not specified'}
+
+KEYWORDS TO LOOK FOR:
+${markScheme.keywords ? JSON.stringify(markScheme.keywords) : 'None specified'}
+
+ACCEPTABLE ANSWERS:
+${markScheme.acceptableAnswers ? JSON.stringify(markScheme.acceptableAnswers) : 'See marking criteria'}
+
+MODEL ANSWER:
+${modelAnswer}
+
+STUDENT'S ANSWER:
+${userAnswer}
+
+Please assess the student's answer and provide:
+1. Marks awarded (out of ${markScheme.maxMarks})
+2. Detailed feedback explaining the marking
+3. Which keywords were successfully included
+4. Which important concepts/keywords were missing
+5. Specific suggestions for improvement
+
+Format your response as JSON:
+{
+  "marksAwarded": number,
+  "feedback": "detailed feedback string",
+  "keywordMatches": ["keyword1", "keyword2"],
+  "missingKeywords": ["missing1", "missing2"],
+  "strengths": ["strength1", "strength2"],
+  "improvements": ["improvement1", "improvement2"]
+}
+`
+const responseSchema = z.object({
+      marksAwarded: z.number().min(0).max(markScheme.maxMarks),
+      feedback: z.string(),
+      keywordMatches: z.array(z.string()),
+      missingKeywords: z.array(z.string()),
+      strengths: z.array(z.string()).optional().nullable(),
+      improvements: z.array(z.string()).optional().nullable()
+    })
+
+    const response = await openai.responses.parse({
+      model: "gpt-5-mini",
+      reasoning: { effort: "medium"},
+      text: {verbosity: 'medium', format: zodTextFormat(responseSchema, "responseSchema")},
+      input: [
+        {
+          role: "system",
+          content: "You are a professional examiner with expertise in educational assessment. Provide fair, detailed, and constructive feedback. Be consistent with marking criteria and award partial marks appropriately."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      max_output_tokens: 5000,
+    })
+
+    const assessment = response.output_parsed
+    
+    return {
+      marksAwarded: Math.min(assessment?.marksAwarded || 0, markScheme.maxMarks),
+      feedback: assessment?.feedback || "Unable to provide feedback",
+      keywordMatches: assessment?.keywordMatches || [],
+      missingKeywords: assessment?.missingKeywords || []
+    }
+  } catch (error) {
+    console.error('Failed to assess user answer:', error)
+    return {
+      marksAwarded: 0,
+      feedback: "Error occurred during assessment",
+      keywordMatches: [],
+      missingKeywords: []
+    }
   }
 }

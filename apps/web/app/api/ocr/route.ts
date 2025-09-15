@@ -50,17 +50,18 @@ async function PDFDocumentsToQnA(pdf: string, filename: string): Promise<any> {
     questionNumber: z.string().describe("The unique identifier for the question, such as '1', '2(a)', '3b(i)', etc. Can only have one of these per question. IMPORTANT"),
     question: z.string().describe("The text of the actual question"),
     type: z.enum(["main","subquestion","subpart"]).describe("main = 1,2,3 etc. subquestion = 1(a),1(b),2(a),2(b) etc. subpart = 1(a)(i), 1(a)(ii), 1(b)(i), 1(b)(ii) etc. IMPORTANT"),
-    parentQuestionNumber: z.string().nullable().describe("the parent question number like 1, 2, 3 etc if the question is a child of it. ONLY INCLUDE THE INTEGER PARENT NUMBER LIKE 1, 2 ... ETC AND NOT 1(a) etc. IMPORTANT"),
+    parentQuestionNumber: z.number().int().nullable().describe("the parent question number like 1, 2, 3 etc if the question is a child of it. IMPORTANT"),
     isMultipleChoice: z.boolean().default(false),
     imageDescription: z.string().nullable().describe("A brief description of any images associated with the question, if applicable. Be sure it is detailed enough to be useful to someone who cannot see the image."),
     answer: answerSchema,
+    maxMarks: z.number().int().nullable().describe("Total marks available for this question"),
     pageNumber: z.number(),
     semanticSummary: z.string().describe("A concise one-line summary of the question and answer for semantic and vector search purposes"),
   })
 
 
   const GPTschema = z.object({
-    QnAs: z.array(questionAndAnswerSchema).min(1).max(50),
+    QnAs: z.array(questionAndAnswerSchema).min(1).max(75),
     lastParentQsProcessed: z.string(),
     totalPages: z.number()
   })
@@ -70,9 +71,9 @@ async function PDFDocumentsToQnA(pdf: string, filename: string): Promise<any> {
     reasoning: {effort: "medium"},
     text: {verbosity: "low", format: zodTextFormat(GPTschema, 'QnASchema')},
     input: [
-      { role: "system", content: "You are a helpful assistant that extracts structured data from educational documents. You will be provided with a document. Your task is to analyze the content of the document and extract all relevant questions and answers, including multiple-choice questions, true/false questions, and written answer questions. The extracted data should be structured in a JSON format according to the provided schema. Imagine yourself as an intelligent OCR." },
+      { role: "system", content: "You are a helpful assistant that extracts structured data from educational documents. You will be provided with a document. Your task is to analyze the content of the document and extract all relevant questions and answers, including multiple-choice questions, true/false questions, and written answer questions. The extracted data should be structured in a JSON format according to the provided schema. Imagine yourself as an intelligent OCR. Conform Strictly to the provided schema and their descriptive fields." },
       { role: "user", content: [
-        {type: "input_text", text: `Extract the questions and answers from pdf provided in order using the schema provided. Mathematical expressions will be displayed as LaTeX syntax`},
+        {type: "input_text", text: `Extract the questions and answers from pdf provided in order using the schema provided. Mathematical expressions will be displayed as LaTeX syntax. Example Output for one question: {questionNumber:"16(a)(i)",question:"Electric vehicles ...",type:"main",parentQuestionNumber:16,isMultipleChoice:false,imageDescription:"Schematic of simple ...",answer:{type:"text",answer:"Current flows in the ..."},pageNumber:16,semanticSummary:"Explain motor torque ..."}`},
         {type: "input_file", file_data: pdf, filename}
       ]}
     ],
@@ -126,15 +127,18 @@ export async function POST(request: NextRequest) {
 
   //safe file before processing
 
+  // Extract base64 content from data URL (remove "data:application/pdf;base64," prefix)
+  const base64Content = file.includes(',') ? file.split(',')[1] : file;
+
   const savedFile = await prisma.file.create({
     data: {
       userId: user.id, // You'll want to get this from auth session
       name: filename,
-      size: Buffer.from(file, 'base64').length, // Set appropriate size if available
+      size: Buffer.from(base64Content, 'base64').length, // Set appropriate size if available
       type: 'qsPaper', // or determine from filename/content
       mimetype: 'application/pdf',
       // content: can be added if you have the file buffer
-      content: Buffer.from(file, 'base64'),
+      content: Buffer.from(base64Content, 'base64'),
       processorSessionId: sessionId || null // Associate with session if provided
     }
   });
@@ -149,10 +153,11 @@ export async function POST(request: NextRequest) {
       questionNumber: q.questionNumber,
       question: q.question,
       type: q.type,
-      parentQuestionNumber: q.parentQuestionNumber,
+      parentQuestionNumber: q.parentQuestionNumber?.toString(),
       isMultipleChoice: q.isMultipleChoice,
       imageDescription: q.imageDescription,
       answer: q.answer,
+      maxMarks: q.maxMarks,
       pageNumber: q.pageNumber,
       semanticSummary: q.semanticSummary,
     })),

@@ -18,11 +18,12 @@ async function PDFDocumentsToMarkScheme(pdf: string, filename: string): Promise<
   // Zod schema for mark scheme extraction
   const markSchemeSchema = z.object({
     questionNumber: z.string().describe("The unique identifier for the question, such as '1', '2(a)', '3b(i)', etc."),
+    parentQuestionNumber: z.number().int().nullable().describe("The parent question number if applicable, e.g., 1, 2"),
     markingCriteria: z.string().describe("Detailed marking criteria and rubric for this question"),
     maxMarks: z.number().describe("Total marks available for this question"),
-    markBreakdown: z.object({}).passthrough().optional().describe("Simple mark allocation breakdown (e.g., {\"method\": 2, \"accuracy\": 3})"),
-    acceptableAnswers: z.array(z.string()).optional().describe("Array of acceptable answer variations"),
-    keywords: z.array(z.string()).optional().describe("Key terms/concepts that should be present in answers"),
+    markBreakdown: z.record(z.union([z.string(), z.number()])).optional().nullable().describe("Simple mark allocation breakdown as key-value pairs (e.g., {\"method\": 2, \"accuracy\": 3})"),
+    acceptableAnswers: z.array(z.string()).optional().nullable().describe("Array of acceptable answer variations"),
+    keywords: z.array(z.string()).optional().nullable().describe("Key terms/concepts that should be present in answers"),
     pageNumber: z.number().describe("Page number where this mark scheme appears"),
     semanticSummary: z.string().describe("A concise one-line summary of the marking criteria for semantic search")
   });
@@ -31,7 +32,7 @@ async function PDFDocumentsToMarkScheme(pdf: string, filename: string): Promise<
     markSchemes: z.array(markSchemeSchema).min(1).max(50),
     totalMarks: z.number().describe("Total marks for the entire exam"),
     totalQuestions: z.number().describe("Total number of questions in the mark scheme"),
-    examLevel: z.string().optional().describe("Educational level (e.g., A-Level, GCSE, etc.)")
+    examLevel: z.string().optional().nullable().describe("Educational level (e.g., A-Level, GCSE, etc.)")
   });
 
   const responsePayload = {
@@ -58,7 +59,7 @@ async function PDFDocumentsToMarkScheme(pdf: string, filename: string): Promise<
   // @ts-ignore - GPT-5-mini API format is correct according to OpenAI docs
   const response = await client.responses.parse({
     ...responsePayload,
-    max_output_tokens: 15000,
+    max_output_tokens: 30000,
   });
 
   const output = response.output_parsed
@@ -99,14 +100,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Save file before processing with markScheme type
+    // Extract base64 content from data URL (remove "data:application/pdf;base64," prefix)
+    const base64Content = file.includes(',') ? file.split(',')[1] : file;
+    
     const savedFile = await prisma.file.create({
       data: {
         userId: user.id,
         name: filename,
-        size: Buffer.from(file, 'base64').length,
+        size: Buffer.from(base64Content, 'base64').length,
         type: 'markScheme', // Distinguish from question papers
         mimetype: 'application/pdf',
-        content: Buffer.from(file, 'base64'),
+        content: Buffer.from(base64Content, 'base64'),
         processorSessionId: sessionId || null // Associate with session if provided
       }
     });
@@ -122,6 +126,7 @@ export async function POST(request: NextRequest) {
     const insertResults = await batchInsertMarkSchemesWithVectors(
       markSchemeData.markSchemes.map((ms: any) => ({
         questionNumber: ms.questionNumber,
+        parentQuestionNumber: ms.parentQuestionNumber?.toString(),
         markingCriteria: ms.markingCriteria,
         maxMarks: ms.maxMarks,
         markBreakdown: ms.markBreakdown,
