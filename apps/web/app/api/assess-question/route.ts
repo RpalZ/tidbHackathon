@@ -64,7 +64,6 @@ export async function POST(request: NextRequest) {
     const updatedQuestion = await prisma.questions.update({
       where: { id: questionId },
       data: {
-        answer: userAnswer, // Store user's answer
         marked: true,
         modelAnswer: modelAnswer,
         marksAwarded: assessment.marksAwarded,

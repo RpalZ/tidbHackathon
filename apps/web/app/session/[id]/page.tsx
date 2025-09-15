@@ -557,13 +557,14 @@ export default function SessionPage() {
       q.userAnswer?.trim() || q.detectedAnswer?.answer?.trim()
     )
 
-    const unmarkedQuestions = questionsWithAnswers.filter(q => !q.marked)
-    const markedQuestions = questionsWithAnswers.filter(q => q.marked)
-
     if (questionsWithAnswers.length === 0) {
       alert('No questions with answers found to assess')
       return
     }
+
+    // Separate marked and unmarked questions
+    const unmarkedQuestions = questionsWithAnswers.filter(q => !q.marked)
+    const markedQuestions = questionsWithAnswers.filter(q => q.marked)
 
     let confirmMessage = ''
     let questionsToProcess = unmarkedQuestions
@@ -1897,8 +1898,30 @@ export default function SessionPage() {
                                           <CheckCircle className="h-4 w-4 mr-2" />
                                           View Results
                                         </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => assessQuestion(question.id, true)}
+                                          disabled={
+                                            assessingQuestions.has(question.id) || 
+                                            (!question.userAnswer?.trim() && !question.detectedAnswer?.answer?.trim())
+                                          }
+                                          className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                                        >
+                                          {assessingQuestions.has(question.id) ? (
+                                            <>
+                                              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                              Re-assessing...
+                                            </>
+                                          ) : (
+                                            <>
+                                              <RotateCcw className="h-4 w-4 mr-2" />
+                                              Re-assess
+                                            </>
+                                          )}
+                                        </Button>
                                         <span className="text-xs text-muted-foreground">
-                                          Question assessed
+                                          Question assessed ({question.marksAwarded}/{question.marks} marks)
                                         </span>
                                       </>
                                     ) : (

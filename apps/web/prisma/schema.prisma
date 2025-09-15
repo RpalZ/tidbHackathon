@@ -44,8 +44,7 @@ model Questions {
     parentQuestionNumber  String? // Parent question identifier
     isMultipleChoice      Boolean  @default(false)
     imageDescription      String?  @db.Text
-    answer                Json?    // Stores detected OCR answer object (text or mcq format)
-    userAnswer            Json?    // Stores user's submitted answer for assessment
+    answer                Json?    // Stores answer object (text or mcq format)
     pageNumber            Int
     semanticSummary       String   @db.Text // For search purposes
     maxMarks              Int?     // Total marks available for this question
