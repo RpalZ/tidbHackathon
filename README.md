@@ -26,7 +26,7 @@ A full-stack document processing system that transforms images and PDFs into sea
 **Required Software:**
 - **Node.js**: 20.19.4+ (required by engines field)
 - **pnpm**: 10.4.1 (specified in packageManager field)
-- **Python**: 3.12.3+ (for backend OCR processing)
+
 
 
 - TiDB Cloud account (or local TiDB instance)
@@ -98,14 +98,6 @@ TIDB_DATABASE="your-database-name"
 TIDB_SSL_CA="/etc/pki/tls/certs/ca-bundle.crt"
 TIDB_URL="mysql://username:password@host:port/database?sslaccept=strict"
 
-# -----------------------------------------------------------------------------
-# Google Cloud Document AI (Optional - for production OCR)
-# -----------------------------------------------------------------------------
-# Note: Mock OCR will be used if not provided
-# GOOGLE_CLOUD_CREDENTIALS='{"type":"service_account","project_id":"your-project",...}'
-# DOCUMENT_AI_LOCATION="us"
-# DOCUMENT_AI_PROJECT_ID="your-gcp-project-id"
-# DOCUMENT_AI_PROCESSOR_ID="your-processor-id"
 
 # -----------------------------------------------------------------------------
 # Development Configuration
@@ -117,15 +109,6 @@ NEXT_PUBLIC_API_BASE_URL="http://localhost:8000"
 # DEBUG_OCR="true"
 # USE_MOCK_OCR="true"
 # NEXT_PUBLIC_DEV_MODE="true"
-
-# -----------------------------------------------------------------------------
-# Backend Configuration (if using separate FastAPI server)
-# -----------------------------------------------------------------------------
-# BACKEND_PORT="8000"
-# BACKEND_HOST="localhost"
-# ALLOWED_ORIGINS="http://localhost:3000,http://127.0.0.1:3000"
-```
-
 
 ### 3. Database Setup
 
@@ -175,16 +158,7 @@ If build fails with `Failed to fetch Geist from Google Fonts`, temporarily modif
 <body className="font-sans antialiased">
 ```
 
-### Optional: Backend OCR Server
 
-**For enhanced OCR processing, start the Python backend:**
-```bash
-cd apps/backend
-pip install -r requirements.txt
-python3 -m uvicorn main:app --reload
-```
-
-Backend will run on `http://localhost:8000`
 
 ## 📖 Usage Guide
 
@@ -318,4 +292,4 @@ This project was built for the TiDB Hackathon, showcasing the integration of TiD
 
 ---
 
-**Built with ❤️ for the TiDB Hackathon**
+
