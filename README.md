@@ -57,19 +57,74 @@ cp .env.example .env.local
 
 **Configure required environment variables in `apps/web/.env.local`:**
 ```env
-# Database (Required)
-DATABASE_URL="mysql://username:password@host:port/database"
+# =============================================================================
+# TiDB Hackathon OCR Application - Environment Variables
+# =============================================================================
 
-# NextAuth (Required)
-NEXTAUTH_SECRET="your-secret-key"
+# -----------------------------------------------------------------------------
+# NextAuth.js Authentication (Required)
+# -----------------------------------------------------------------------------
+AUTH_SECRET="your-auth-secret-key"
 NEXTAUTH_URL="http://localhost:3000"
+AUTH_TRUST_HOST="true"
 
-# Google OAuth (Required for auth)
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
+# -----------------------------------------------------------------------------
+# Google OAuth (Optional - for Google login)
+# -----------------------------------------------------------------------------
+AUTH_GOOGLE_ID="your-google-client-id"
+AUTH_GOOGLE_SECRET="your-google-client-secret"
 
-# OpenAI (Required for AI features)
+# -----------------------------------------------------------------------------
+# GitHub OAuth (Optional - for GitHub login)
+# -----------------------------------------------------------------------------
+AUTH_GITHUB_ID="your-github-client-id"
+AUTH_GITHUB_SECRET="your-github-client-secret"
+
+# -----------------------------------------------------------------------------
+# OpenAI API (Required for AI features)
+# -----------------------------------------------------------------------------
 OPENAI_API_KEY="your-openai-api-key"
+# OPENAI_ORG_ID="your-organization-id"     # Optional
+# OPENAI_PROJECT_ID="your-project-id"      # Optional
+
+# -----------------------------------------------------------------------------
+# TiDB Database (Required)
+# -----------------------------------------------------------------------------
+TIDB_HOST="your-tidb-host"
+TIDB_PORT="4000"
+TIDB_USER="your-tidb-username"
+TIDB_PASSWORD="your-tidb-password"
+TIDB_DATABASE="your-database-name"
+TIDB_SSL_CA="/etc/pki/tls/certs/ca-bundle.crt"
+TIDB_URL="mysql://username:password@host:port/database?sslaccept=strict"
+
+# -----------------------------------------------------------------------------
+# Google Cloud Document AI (Optional - for production OCR)
+# -----------------------------------------------------------------------------
+# Note: Mock OCR will be used if not provided
+# GOOGLE_CLOUD_CREDENTIALS='{"type":"service_account","project_id":"your-project",...}'
+# DOCUMENT_AI_LOCATION="us"
+# DOCUMENT_AI_PROJECT_ID="your-gcp-project-id"
+# DOCUMENT_AI_PROCESSOR_ID="your-processor-id"
+
+# -----------------------------------------------------------------------------
+# Development Configuration
+# -----------------------------------------------------------------------------
+NODE_ENV="development"
+NEXT_PUBLIC_API_BASE_URL="http://localhost:8000"
+
+# Optional development flags
+# DEBUG_OCR="true"
+# USE_MOCK_OCR="true"
+# NEXT_PUBLIC_DEV_MODE="true"
+
+# -----------------------------------------------------------------------------
+# Backend Configuration (if using separate FastAPI server)
+# -----------------------------------------------------------------------------
+# BACKEND_PORT="8000"
+# BACKEND_HOST="localhost"
+# ALLOWED_ORIGINS="http://localhost:3000,http://127.0.0.1:3000"
+```
 
 
 ### 3. Database Setup
