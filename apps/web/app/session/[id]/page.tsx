@@ -405,40 +405,138 @@ export default function SessionPage() {
     setChatInput('')
     setIsTyping(true)
 
-    // Create context for AI about current session
-    const context = {
-      sessionName: sessionData?.name,
-      examBoard: sessionData?.examBoard,
-      subject: sessionData?.subject,
-      year: sessionData?.year,
-      currentPaper: selectedPaper?.filename,
-      totalQuestions: questions.length,
-      questionsWithAnswers: questions.filter(q => q.userAnswer?.trim()).length
-    }
+    try {
+      // Call the new chat API with RAG and tool calling
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: userMessage.message,
+          sessionId: sessionId,
+          conversationHistory: chatMessages.slice(-10), // Send last 10 messages for context
+          currentPaper: selectedPaper ? {
+            id: selectedPaper.id,
+            filename: selectedPaper.filename,
+            documentType: selectedPaper.documentType,
+            status: selectedPaper.status,
+            totalQuestions: selectedPaper.totalQuestions,
+            linkedMarkSchemeId: selectedPaper.linkedMarkSchemeId
+          } : null
+        })
+      })
 
-    // Simulate AI response with context (replace with actual API call)
-    setTimeout(() => {
-      let aiResponse = "I'm here to help you with your exam questions. "
-      
-      if (context.currentPaper) {
-        aiResponse += `I can see you're working on ${context.currentPaper} from ${context.examBoard} ${context.subject} ${context.year}. `
+      if (!response.ok) {
+        throw new Error('Failed to get AI response')
       }
+
+      const result = await response.json()
       
-      if (context.totalQuestions > 0) {
-        aiResponse += `You have ${context.totalQuestions} questions total, with ${context.questionsWithAnswers} already answered. `
+      // Format the AI response based on type
+      const aiResponse = result.response
+      let aiResponseText = ''
+
+      // Handle different response types
+      if (aiResponse.type) {
+        switch (aiResponse.type) {
+          case 'explanation':
+            aiResponseText = `**Explanation:**\n${aiResponse.explanation}\n\n`
+            if (aiResponse.keyPoints?.length > 0) {
+              aiResponseText += `**Key Points:**\n${aiResponse.keyPoints.map((point: string) => `• ${point}`).join('\n')}\n\n`
+            }
+            if (aiResponse.examples?.length > 0) {
+              aiResponseText += `**Examples:**\n${aiResponse.examples.map((example: string) => `• ${example}`).join('\n')}\n\n`
+            }
+            if (aiResponse.followUpQuestions?.length > 0) {
+              aiResponseText += `**Follow-up Questions:**\n${aiResponse.followUpQuestions.map((q: string) => `• ${q}`).join('\n')}\n\n`
+            }
+            if (aiResponse.difficulty) {
+              aiResponseText += `**Difficulty Level:** ${aiResponse.difficulty.charAt(0).toUpperCase() + aiResponse.difficulty.slice(1)}`
+            }
+            break
+            
+          case 'answer':
+            aiResponseText = `**Answer:** ${aiResponse.answer}\n\n`
+            if (aiResponse.workingSteps?.length > 0) {
+              aiResponseText += `**Working Steps:**\n${aiResponse.workingSteps.map((step: string, i: number) => `${i + 1}. ${step}`).join('\n')}\n\n`
+            }
+            aiResponseText += `**Confidence:** ${aiResponse.confidence}%\n\n`
+            if (aiResponse.assumptions?.length > 0) {
+              aiResponseText += `**Assumptions Made:**\n${aiResponse.assumptions.map((assumption: string) => `• ${assumption}`).join('\n')}\n\n`
+            }
+            if (aiResponse.alternativeApproaches?.length > 0) {
+              aiResponseText += `**Alternative Approaches:**\n${aiResponse.alternativeApproaches.map((approach: string) => `• ${approach}`).join('\n')}`
+            }
+            break
+            
+          case 'assessment':
+            aiResponseText = `**Assessment Results:**\n`
+            aiResponseText += `**Score:** ${aiResponse.marksAwarded}/${aiResponse.maxMarks} marks (${aiResponse.percentage}%)\n\n`
+            aiResponseText += `**Feedback:** ${aiResponse.feedback}\n\n`
+            if (aiResponse.strengths?.length > 0) {
+              aiResponseText += `**Strengths:**\n${aiResponse.strengths.map((strength: string) => `• ${strength}`).join('\n')}\n\n`
+            }
+            if (aiResponse.keywordMatches?.length > 0) {
+              aiResponseText += `**Keywords Found:** ${aiResponse.keywordMatches.join(', ')}\n\n`
+            }
+            if (aiResponse.missingElements?.length > 0) {
+              aiResponseText += `**Missing Elements:**\n${aiResponse.missingElements.map((element: string) => `• ${element}`).join('\n')}\n\n`
+            }
+            if (aiResponse.improvements?.length > 0) {
+              aiResponseText += `**Improvements:**\n${aiResponse.improvements.map((imp: string) => `• ${imp}`).join('\n')}`
+            }
+            break
+            
+          case 'general':
+          default:
+            aiResponseText = aiResponse.response
+            if (aiResponse.encouragement) {
+              aiResponseText += `\n\n**Encouragement:** ${aiResponse.encouragement}`
+            }
+            if (aiResponse.suggestions?.length > 0) {
+              aiResponseText += `\n\n**Suggestions:**\n${aiResponse.suggestions.map((s: string) => `• ${s}`).join('\n')}`
+            }
+            if (aiResponse.nextSteps?.length > 0) {
+              aiResponseText += `\n\n**Next Steps:**\n${aiResponse.nextSteps.map((step: string, i: number) => `${i + 1}. ${step}`).join('\n')}`
+            }
+            break
+        }
+      } else {
+        // Simple response format fallback
+        aiResponseText = aiResponse.response || aiResponse || 'I apologize, but I encountered an issue processing your request.'
       }
-      
-      aiResponse += "Feel free to ask me about specific questions, concepts, or request explanations for any topic!"
+
+      // Add tool usage information if available (updated for multiple tools)
+      if (result.toolsUsed && result.toolsUsed.length > 0) {
+        aiResponseText += `\n\n*Used tools: ${result.toolsUsed.join(', ')}*`
+      } else if (result.toolUsed) {
+        aiResponseText += `\n\n*Used tool: ${result.toolUsed}*`
+      }
 
       const aiMessage: ChatMessage = {
         id: `ai-${Date.now()}`,
-        message: aiResponse,
+        message: aiResponseText,
         timestamp: new Date(),
         isUser: false
       }
+      
       setChatMessages(prev => [...prev, aiMessage])
+      
+    } catch (error) {
+      console.error('Error sending chat message:', error)
+      
+      const errorMessage: ChatMessage = {
+        id: `error-${Date.now()}`,
+        message: 'Sorry, I encountered an error processing your message. Please try again.',
+        timestamp: new Date(),
+        isUser: false
+      }
+      
+      setChatMessages(prev => [...prev, errorMessage])
+    } finally {
       setIsTyping(false)
-    }, 1500)
+    }
   }
 
   // Assess individual question
@@ -1150,7 +1248,7 @@ export default function SessionPage() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-100px)]">
         {/* Left Column - Documents Management + Session Overview OR Chat Module */}
-        <div className="lg:col-span-1 space-y-6 overflow-y-auto top-6 h-[calc(100vh-100px)]">
+        <div className="lg:col-span-1 space-y-6 overflow-y-auto top-6 h-[calc(100vh-140px)]">
           {!isChatMode ? (
             <>
               {/* Upload New Paper */}
@@ -1443,33 +1541,86 @@ export default function SessionPage() {
           {/* Progress */}
           <Card>
             <CardHeader>
-              <CardTitle>Progress</CardTitle>
+              <CardTitle className="flex items-center">
+                <Activity className="h-5 w-5 mr-2" />
+                Progress Overview
+              </CardTitle>
+              <CardDescription>Track your session completion and performance</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-6">
+                {/* Questions Progress */}
                 <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Questions Solved</span>
-                    <span>{sessionData.solvedQuestions}/{sessionData.totalQuestions}</span>
+                  <div className="flex justify-between items-center text-sm mb-2">
+                    <span className="font-medium text-foreground">Questions Solved</span>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-muted-foreground">{sessionData.solvedQuestions}/{sessionData.totalQuestions}</span>
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
+                        {sessionData.totalQuestions > 0 ? Math.round((sessionData.solvedQuestions / sessionData.totalQuestions) * 100) : 0}%
+                      </span>
+                    </div>
                   </div>
-                  <div className="w-full bg-muted rounded-full h-2">
+                  <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
                     <div 
-                      className="bg-primary h-2 rounded-full transition-all duration-300" 
+                      className="bg-gradient-to-r from-primary to-primary/80 h-3 rounded-full transition-all duration-500 ease-out relative overflow-hidden" 
                       style={{ width: `${sessionData.totalQuestions > 0 ? (sessionData.solvedQuestions / sessionData.totalQuestions) * 100 : 0}%` }}
-                    />
+                    >
+                      <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                    <span>Start</span>
+                    <span>Complete</span>
                   </div>
                 </div>
                 
+                {/* Accuracy Progress */}
                 <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Accuracy</span>
-                    <span>{sessionData.avgAccuracy}%</span>
+                  <div className="flex justify-between items-center text-sm mb-2">
+                    <span className="font-medium text-foreground">Average Accuracy</span>
+                    <div className="flex items-center space-x-2">
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        sessionData.avgAccuracy >= 90 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                        sessionData.avgAccuracy >= 70 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                        'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                      }`}>
+                        {sessionData.avgAccuracy >= 90 ? 'Excellent' :
+                         sessionData.avgAccuracy >= 70 ? 'Good' : 'Needs Work'}
+                      </span>
+                      <span className="text-muted-foreground font-medium">{sessionData.avgAccuracy}%</span>
+                    </div>
                   </div>
-                  <div className="w-full bg-muted rounded-full h-2">
+                  <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
                     <div 
-                      className="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                      className={`h-3 rounded-full transition-all duration-500 ease-out relative overflow-hidden ${
+                        sessionData.avgAccuracy >= 90 ? 'bg-gradient-to-r from-green-500 to-green-400' :
+                        sessionData.avgAccuracy >= 70 ? 'bg-gradient-to-r from-yellow-500 to-yellow-400' :
+                        'bg-gradient-to-r from-red-500 to-red-400'
+                      }`}
                       style={{ width: `${sessionData.avgAccuracy}%` }}
-                    />
+                    >
+                      <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                    <span>0%</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+
+                {/* Performance Metrics */}
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                    <div className="text-lg font-bold text-primary">
+                      {sessionData.papers.filter(p => p.status === 'solved' || p.status === 'parsed').length}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Papers Done</div>
+                  </div>
+                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                    <div className="text-lg font-bold text-green-600">
+                      {sessionData.totalProcessingTime}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Total Time</div>
                   </div>
                 </div>
               </div>
@@ -1500,8 +1651,8 @@ export default function SessionPage() {
             </>
           ) : (
             /* Chat Module */
-            <Card className="h-full">
-              <CardHeader>
+            <Card className="h-[calc(100vh-140px)] flex flex-col">
+              <CardHeader className="flex-shrink-0">
                 <CardTitle className="flex items-center">
                   <MessageCircle className="h-5 w-5 mr-2" />
                   AI Chat Assistant
@@ -1521,9 +1672,9 @@ export default function SessionPage() {
                   </div>
                 )}
               </CardHeader>
-              <CardContent className="p-0 h-full flex flex-col">
+              <CardContent className="p-0 flex-1 flex flex-col min-h-0">
                 {/* Chat Messages */}
-                <div className="flex-1 p-4 overflow-y-auto space-y-4 min-h-0">
+                <div className="flex-1 p-4 overflow-y-auto space-y-4 min-h-0 w-full max-w-full">
                   {chatMessages.length === 0 ? (
                     <div className="text-center py-8">
                       <MessageCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -1537,10 +1688,16 @@ export default function SessionPage() {
                         <p className="text-sm font-medium text-muted-foreground">Try asking:</p>
                         <div className="grid gap-2">
                           {[
-                            "Explain the concept behind question 1",
-                            "Help me understand this physics problem",
-                            "What's the best approach for solving this type of question?",
-                            "Can you check my answer for question 2?"
+                            selectedPaper 
+                              ? `Help me with ${selectedPaper.filename.replace('.pdf', '')} questions`
+                              : "Show me similar questions to practice",
+                            questions.length > 0 
+                              ? `Explain question ${questions[0]?.questionNumber || '1'} step by step`
+                              : "What concepts should I focus on for this exam?",
+                            sessionData?.subject 
+                              ? `Give me tips for ${sessionData.subject} problem-solving`
+                              : "What's the best approach for solving exam questions?",
+                            "Assess my answer and give detailed feedback"
                           ].map((prompt, index) => (
                             <button
                               key={index}
@@ -1557,16 +1714,66 @@ export default function SessionPage() {
                     chatMessages.map((message) => (
                       <div
                         key={message.id}
-                        className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
+                        className={`flex w-full ${message.isUser ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
-                          className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                          className={`max-w-[75%] min-w-0 rounded-lg px-3 py-2 break-words overflow-hidden ${
                             message.isUser
                               ? 'bg-primary text-primary-foreground ml-4'
                               : 'bg-muted mr-4'
                           }`}
+                          style={{ wordWrap: 'break-word', overflowWrap: 'anywhere', wordBreak: 'break-word' }}
                         >
-                          <p className="text-sm">{message.message}</p>
+                          <div className="text-sm break-words" style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word', overflowWrap: 'anywhere' }}>
+                            {message.isUser ? (
+                              message.message
+                            ) : (
+                              // Render AI messages with basic markdown formatting
+                              message.message
+                                .split('\n')
+                                .map((line, index) => {
+                                  if (line.startsWith('**') && line.endsWith('**')) {
+                                    // Bold headers
+                                    return (
+                                      <div key={index} className="font-semibold mt-2 first:mt-0 break-words">
+                                        {line.slice(2, -2)}
+                                      </div>
+                                    )
+                                  } else if (line.startsWith('• ')) {
+                                    // Bullet points
+                                    return (
+                                      <div key={index} className="ml-4 mt-1 break-words">
+                                        {line}
+                                      </div>
+                                    )
+                                  } else if (line.match(/^\d+\. /)) {
+                                    // Numbered lists
+                                    return (
+                                      <div key={index} className="ml-4 mt-1 break-words">
+                                        {line}
+                                      </div>
+                                    )
+                                  } else if (line.startsWith('*') && line.endsWith('*') && !line.startsWith('**')) {
+                                    // Italic text (like tool usage)
+                                    return (
+                                      <div key={index} className="italic text-xs opacity-70 mt-2 break-words">
+                                        {line.slice(1, -1)}
+                                      </div>
+                                    )
+                                  } else if (line.trim() === '') {
+                                    // Empty lines for spacing
+                                    return <div key={index} className="h-2"></div>
+                                  } else {
+                                    // Regular text
+                                    return (
+                                      <div key={index} className="mt-1 first:mt-0 break-words">
+                                        {line}
+                                      </div>
+                                    )
+                                  }
+                                })
+                            )}
+                          </div>
                           <p className="text-xs opacity-70 mt-1">
                             {message.timestamp.toLocaleTimeString()}
                           </p>
@@ -1589,7 +1796,7 @@ export default function SessionPage() {
                 </div>
                 
                 {/* Chat Input */}
-                <div className="border-t p-4">
+                <div className="border-t p-4 flex-shrink-0">
                   <div className="flex space-x-2">
                     <input
                       type="text"

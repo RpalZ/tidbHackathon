@@ -83,7 +83,7 @@ export function Navbar() {
               <GraduationCap className="h-5 w-5" />
             </div>
             <span className="hidden sm:inline-block bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-              AI Tutor
+              PinchAI
             </span>
           </Link>
 
