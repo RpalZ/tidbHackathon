@@ -920,14 +920,128 @@ Generate a complete, well-structured model answer that would achieve full marks 
 }
 
 /**
- * Assess user's answer against mark scheme using AI
- * 
- * @param userAnswer - User's submitted answer
- * @param markScheme - Mark scheme object
- * @param question - Question object
- * @param modelAnswer - Generated model answer
- * @returns Assessment result with marks and feedback
+ * Optimized batch assessment for parallel processing
+ * Generates multiple model answers in parallel
  */
+export async function generateModelAnswersBatch(
+  markSchemes: any[],
+  questions: any[]
+): Promise<string[]> {
+  try {
+    if (markSchemes.length !== questions.length) {
+      throw new Error('Mark schemes and questions arrays must have the same length')
+    }
+
+    // Process in parallel with concurrency limit
+    const BATCH_SIZE = 5
+    const results: string[] = []
+
+    for (let i = 0; i < markSchemes.length; i += BATCH_SIZE) {
+      const batch = markSchemes.slice(i, i + BATCH_SIZE)
+      const questionBatch = questions.slice(i, i + BATCH_SIZE)
+
+      const batchPromises = batch.map((markScheme, index) => 
+        generateModelAnswer(markScheme, questionBatch[index])
+      )
+
+      const batchResults = await Promise.allSettled(batchPromises)
+      
+      for (const result of batchResults) {
+        if (result.status === 'fulfilled') {
+          results.push(result.value)
+        } else {
+          console.error('Model answer generation failed:', result.reason)
+          results.push('Model answer generation failed')
+        }
+      }
+    }
+
+    return results
+  } catch (error) {
+    console.error('Batch model answer generation failed:', error)
+    return markSchemes.map(() => 'Batch generation failed')
+  }
+}
+
+/**
+ * Optimized batch assessment for parallel processing
+ * Assesses multiple user answers in parallel
+ */
+export async function assessUserAnswersBatch(
+  userAnswers: string[],
+  markSchemes: any[],
+  questions: any[],
+  modelAnswers: string[]
+): Promise<Array<{
+  marksAwarded: number,
+  feedback: string,
+  keywordMatches: string[],
+  missingKeywords: string[]
+}>> {
+  try {
+    if (userAnswers.length !== markSchemes.length || 
+        markSchemes.length !== questions.length || 
+        questions.length !== modelAnswers.length) {
+      throw new Error('All arrays must have the same length for batch assessment')
+    }
+
+    // Process in parallel with concurrency limit
+    const BATCH_SIZE = 4 // Smaller batch size for AI-intensive operations
+    const results: Array<{
+      marksAwarded: number,
+      feedback: string,
+      keywordMatches: string[],
+      missingKeywords: string[]
+    }> = []
+
+    for (let i = 0; i < userAnswers.length; i += BATCH_SIZE) {
+      const userAnswerBatch = userAnswers.slice(i, i + BATCH_SIZE)
+      const markSchemeBatch = markSchemes.slice(i, i + BATCH_SIZE)
+      const questionBatch = questions.slice(i, i + BATCH_SIZE)
+      const modelAnswerBatch = modelAnswers.slice(i, i + BATCH_SIZE)
+
+      const batchPromises = userAnswerBatch.map((userAnswer, index) => 
+        assessUserAnswer(
+          userAnswer,
+          markSchemeBatch[index],
+          questionBatch[index],
+          modelAnswerBatch[index] || ''
+        )
+      )
+
+      const batchResults = await Promise.allSettled(batchPromises)
+      
+      for (const result of batchResults) {
+        if (result.status === 'fulfilled') {
+          results.push(result.value)
+        } else {
+          console.error('Assessment failed:', result.reason)
+          results.push({
+            marksAwarded: 0,
+            feedback: 'Assessment failed due to system error',
+            keywordMatches: [],
+            missingKeywords: []
+          })
+        }
+      }
+
+      // Small delay between batches to respect API rate limits
+      if (i + BATCH_SIZE < userAnswers.length) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+    }
+
+    return results
+  } catch (error) {
+    console.error('Batch assessment failed:', error)
+    return userAnswers.map(() => ({
+      marksAwarded: 0,
+      feedback: 'Batch assessment failed',
+      keywordMatches: [],
+      missingKeywords: []
+    }))
+  }
+}
 export async function assessUserAnswer(
   userAnswer: string,
   markScheme: any,
@@ -994,7 +1108,7 @@ const responseSchema = z.object({
 
     const response = await openai.responses.parse({
       model: "gpt-5-mini",
-      reasoning: { effort: "medium"},
+      reasoning: { effort: "minimal"},
       text: {verbosity: 'medium', format: zodTextFormat(responseSchema, "responseSchema")},
       input: [
         {

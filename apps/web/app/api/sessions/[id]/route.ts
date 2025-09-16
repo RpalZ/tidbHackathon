@@ -78,7 +78,7 @@ export async function GET(request: NextRequest, { params }: Context) {
           totalQuestions,
           solvedQuestions,
           accuracy: totalQuestions > 0 ? (solvedQuestions / totalQuestions) * 100 : 0,
-          processingTime: '1m 30s', // Mock processing time for now
+          // processingTime: '1m 30s', // Mock processing time for now
           documentType: file.type,
           linkedMarkSchemeId: file.linkedMarkSchemeId
         }

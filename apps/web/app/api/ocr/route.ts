@@ -56,7 +56,7 @@ async function PDFDocumentsToQnA(pdf: string, filename: string): Promise<any> {
     answer: answerSchema,
     maxMarks: z.number().int().nullable().describe("Total marks available for this question"),
     pageNumber: z.number(),
-    semanticSummary: z.string().describe("A concise one-line summary of the question and answer for semantic and vector search purposes"),
+    semanticSummary: z.string().describe("A concise one-line summary of the question and answer for semantic and vector search purposes. INCLUDE question number"),
   })
 
 

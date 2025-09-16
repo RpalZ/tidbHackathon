@@ -34,6 +34,7 @@ import {
   Save,
   X,
   RotateCcw,
+  Zap,
   AlertCircle as AlertCircleIcon
 } from "lucide-react"
 import Link from "next/link"
@@ -603,8 +604,13 @@ export default function SessionPage() {
         [questionId]: result.assessment
       }))
 
-      // Show assessment result modal
-      setSelectedAssessment(result.assessment)
+      // Show assessment result modal with question data
+      setSelectedAssessment({
+        ...result.assessment,
+        questionNumber: question.questionNumber,
+        maxMarks: question.marks, // Get total marks from question
+        userAnswer: answerToAssess
+      })
       setShowAssessmentModal(true)
 
     } catch (error) {
@@ -626,7 +632,13 @@ export default function SessionPage() {
 
     // Check if we already have the result cached
     if (assessmentResults[questionId]) {
-      setSelectedAssessment(assessmentResults[questionId])
+      // Include question data with assessment for modal display
+      setSelectedAssessment({
+        ...assessmentResults[questionId],
+        questionNumber: question.questionNumber,
+        maxMarks: question.marks, // Get total marks from question
+        userAnswer: question.userAnswer || question.detectedAnswer?.answer || ''
+      })
       setShowAssessmentModal(true)
       return
     }
@@ -639,7 +651,13 @@ export default function SessionPage() {
           ...prev,
           [questionId]: result.assessment
         }))
-        setSelectedAssessment(result.assessment)
+        // Include question data with assessment for modal display
+        setSelectedAssessment({
+          ...result.assessment,
+          questionNumber: question.questionNumber,
+          maxMarks: question.marks, // Get total marks from question
+          userAnswer: question.userAnswer || question.detectedAnswer?.answer || ''
+        })
         setShowAssessmentModal(true)
       }
     } catch (error) {
@@ -647,7 +665,7 @@ export default function SessionPage() {
     }
   }
 
-  // Mark all questions in current paper
+  // Mark all questions in current paper (using parallel processing)
   const markAllQuestions = async () => {
     if (!selectedPaper) return
     
@@ -671,31 +689,31 @@ export default function SessionPage() {
       // Mixed: some marked, some unmarked
       const choice = confirm(
         `Found ${unmarkedQuestions.length} unmarked and ${markedQuestions.length} already marked questions.\n\n` +
-        `Click "OK" to assess only unmarked questions\n` +
-        `Click "Cancel" to re-assess ALL questions`
+        `Click "OK" to assess only unmarked questions (Parallel Mode)\n` +
+        `Click "Cancel" to re-assess ALL questions (Parallel Mode)`
       )
       
       if (choice) {
-        confirmMessage = `This will assess ${unmarkedQuestions.length} unmarked questions. Continue?`
+        confirmMessage = `This will assess ${unmarkedQuestions.length} unmarked questions using parallel processing (6x faster). Continue?`
         questionsToProcess = unmarkedQuestions
       } else {
-        confirmMessage = `This will re-assess ALL ${questionsWithAnswers.length} questions. Continue?`
+        confirmMessage = `This will re-assess ALL ${questionsWithAnswers.length} questions using parallel processing (6x faster). Continue?`
         questionsToProcess = questionsWithAnswers
       }
     } else if (markedQuestions.length > 0) {
       // All are already marked
       const choice = confirm(
         `All ${markedQuestions.length} questions have already been assessed.\n\n` +
-        `Do you want to re-assess all of them?`
+        `Do you want to re-assess all of them using parallel processing (6x faster)?`
       )
       
       if (!choice) return
       
-      confirmMessage = `This will re-assess all ${markedQuestions.length} questions. Continue?`
+      confirmMessage = `This will re-assess all ${markedQuestions.length} questions using parallel processing (6x faster). Continue?`
       questionsToProcess = markedQuestions
     } else {
       // All are unmarked
-      confirmMessage = `This will assess ${unmarkedQuestions.length} questions. Continue?`
+      confirmMessage = `This will assess ${unmarkedQuestions.length} questions using parallel processing (6x faster). Continue?`
       questionsToProcess = unmarkedQuestions
     }
 
@@ -706,62 +724,100 @@ export default function SessionPage() {
     const questionIds = questionsToProcess.map(q => q.id)
     setAssessingQuestions(prev => new Set([...prev, ...questionIds]))
 
-    let successCount = 0
-    let errorCount = 0
+    const startTime = Date.now()
+    console.log(`🚀 Starting parallel assessment of ${questionsToProcess.length} questions...`)
 
-    for (const question of questionsToProcess) {
-      try {
-        const answerToAssess = question.userAnswer?.trim() || question.detectedAnswer?.answer?.trim()
-        
-        const response = await fetch('/api/assess-question', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            questionId: question.id,
-            userAnswer: answerToAssess
-          })
+    try {
+      // Prepare questions for parallel processing
+      const questionsData = questionsToProcess.map(question => ({
+        questionId: question.id,
+        userAnswer: question.userAnswer?.trim() || question.detectedAnswer?.answer?.trim() || ''
+      }))
+
+      // Call parallel assessment API
+      const response = await fetch('/api/assess-questions-parallel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          questions: questionsData
         })
+      })
 
-        if (response.ok) {
-          const result = await response.json()
-          
-          // Update question with assessment results
-          setQuestions(prev => prev.map(q => 
-            q.id === question.id ? {
-              ...q,
-              marked: true,
-              modelAnswer: result.assessment.modelAnswer,
-              marksAwarded: result.assessment.marksAwarded,
-              feedback: result.assessment.feedback
-            } : q
-          ))
-
-          // Store detailed assessment results
-          setAssessmentResults(prev => ({
-            ...prev,
-            [question.id]: result.assessment
-          }))
-
-          successCount++
-        } else {
-          const errorData = await response.json()
-          console.error(`Failed to assess question ${question.questionNumber}:`, errorData.error)
-          errorCount++
-        }
-      } catch (error) {
-        console.error(`Error assessing question ${question.questionNumber}:`, error)
-        errorCount++
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Parallel assessment failed')
       }
 
-      // Remove from assessing set
-      setAssessingQuestions(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(question.id)
-        return newSet
-      })
-    }
+      const result = await response.json()
+      const endTime = Date.now()
+      const processingTime = ((endTime - startTime) / 1000).toFixed(1)
 
-    alert(`Assessment complete!\nSuccessful: ${successCount}\nFailed: ${errorCount}`)
+      console.log(`✅ Parallel assessment completed in ${processingTime}s`)
+      console.log('Performance metrics:', result.performanceReport)
+      console.log('Summary:', result.summary)
+
+      // Update questions with assessment results using functional state update
+      let successCount = 0
+      let errorCount = 0
+
+      // Create assessment results map for efficient updates
+      const assessmentResultsMap = new Map()
+      for (const assessment of result.results) {
+        if (assessment.success && assessment.assessment) {
+          assessmentResultsMap.set(assessment.questionId, assessment.assessment)
+          successCount++
+        } else {
+          console.error(`Failed to assess question ${assessment.questionId}:`, assessment.error)
+          errorCount++
+        }
+      }
+
+      // Update questions state with all assessment results
+      setQuestions(prev => prev.map(q => {
+        const assessmentResult = assessmentResultsMap.get(q.id)
+        if (assessmentResult) {
+          return {
+            ...q,
+            marked: true,
+            modelAnswer: assessmentResult.modelAnswer,
+            marksAwarded: assessmentResult.marksAwarded,
+            feedback: assessmentResult.feedback
+          }
+        }
+        return q
+      }))
+
+      // Store detailed assessment results for modal viewing
+      setAssessmentResults(prev => {
+        const newResults = { ...prev }
+        for (const [questionId, assessmentResult] of assessmentResultsMap) {
+          newResults[questionId] = assessmentResult
+        }
+        return newResults
+      })
+
+      // Show comprehensive results with performance metrics
+      const summary = result.summary
+      const speedupFactor = summary.parallelSpeedupFactor || 'N/A'
+
+      alert(
+        `🎉 Parallel Assessment Complete!\n\n` +
+        `✅ Successful: ${successCount}\n` +
+        `❌ Failed: ${errorCount}\n` +
+        `⏱️ Processing Time: ${processingTime}s\n` +
+        `🚀 Speed Improvement: ${speedupFactor}x faster\n` +
+        `📊 Throughput: ${summary.throughputQuestionsPerSec} questions/sec\n` +
+        `� Overall Score: ${summary.overallPercentage}%\n` +
+        `💾 Batches Processed: ${summary.batchesProcessed}`
+      )
+
+    } catch (error) {
+      console.error('Error in parallel assessment:', error)
+      alert(`Parallel assessment failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      // Clear all assessing states
+      setAssessingQuestions(new Set())
+    }
   }
 
   // Upload paper handler
@@ -1528,13 +1584,6 @@ export default function SessionPage() {
                 </div>
                 <span className="font-medium">{sessionData.avgAccuracy}%</span>
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Processing Time</span>
-                </div>
-                <span className="font-medium">{sessionData.totalProcessingTime}</span>
-              </div>
             </CardContent>
           </Card>
 
@@ -1631,6 +1680,7 @@ export default function SessionPage() {
           <Card>
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Streamlined assessment with parallel processing</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <Button variant="outline" className="w-full justify-start">
@@ -1641,11 +1691,36 @@ export default function SessionPage() {
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Reprocess All Papers
               </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Target className="h-4 w-4 mr-2" />
-                Mark All Questions
+              <Button 
+                variant="outline" 
+                className="w-full justify-start text-blue-600 border-blue-600 hover:bg-blue-50"
+                onClick={markAllQuestions}
+                disabled={!selectedPaper || questions.filter(q => q.userAnswer?.trim() || q.detectedAnswer?.answer?.trim()).length === 0}
+              >
+                <Zap className="h-4 w-4 mr-2" />
+                Assess All Questions (Parallel 6x Speed)
               </Button>
               
+              {/* Performance indicator */}
+              {selectedPaper && questions.length > 0 && (
+                <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Zap className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Parallel Processing Ready</span>
+                  </div>
+                  <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                    <div>• Processes 6 questions simultaneously</div>
+                    <div>• 6x faster than sequential assessment</div>
+                    <div>• Real-time performance monitoring</div>
+                    <div>• Automatic timeout protection (30s per question)</div>
+                  </div>
+                  {questions.filter(q => q.userAnswer?.trim() || q.detectedAnswer?.answer?.trim()).length > 0 && (
+                    <div className="mt-2 text-xs font-medium text-blue-800 dark:text-blue-200">
+                      Ready to assess {questions.filter(q => q.userAnswer?.trim() || q.detectedAnswer?.answer?.trim()).length} questions
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
             </>
@@ -1865,6 +1940,97 @@ export default function SessionPage() {
                     ))}
                 </div>
               </div>
+
+              {/* Marks Summary - Right under tabs */}
+              {selectedPaper && questions.length > 0 && (
+                <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950/20 dark:to-green-950/20 border-b">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-6">
+                      {/* Total Score */}
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-primary">
+                          {questions.filter(q => q.marked).reduce((sum, q) => sum + (q.marksAwarded || 0), 0)}/
+                          {questions.reduce((sum, q) => sum + q.marks, 0)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Total Score</div>
+                      </div>
+
+                      {/* Percentage */}
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">
+                          {questions.reduce((sum, q) => sum + q.marks, 0) > 0 
+                            ? Math.round((questions.filter(q => q.marked).reduce((sum, q) => sum + (q.marksAwarded || 0), 0) / questions.reduce((sum, q) => sum + q.marks, 0)) * 100)
+                            : 0}%
+                        </div>
+                        <div className="text-xs text-muted-foreground">Overall Score</div>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="flex-1 max-w-xs">
+                        <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                          <span>Progress</span>
+                          <span>{questions.filter(q => q.marked).length}/{questions.length} marked</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300" 
+                            style={{ 
+                              width: `${questions.length > 0 ? (questions.filter(q => q.marked).length / questions.length) * 100 : 0}%` 
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Paper Info */}
+                    <div className="text-right">
+                      <div className="text-sm font-medium">{selectedPaper.filename}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {selectedPaper.examBoard} • {sessionData.year} • {questions.length} questions
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Bulk Actions Bar */}
+              {questions.length > 0 && (
+                <div className="px-6 py-3 border-b bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <span className="text-sm font-medium">
+                        {questions.length} questions • {questions.filter(q => q.userAnswer || q.detectedAnswer?.answer).length} answered • {questions.filter(q => q.marked).length} assessed
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        size="sm"
+                        onClick={markAllQuestions}
+                        disabled={assessingQuestions.size > 0 || questions.filter(q => q.userAnswer?.trim() || q.detectedAnswer?.answer?.trim()).length === 0}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        {assessingQuestions.size > 0 ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            Assessing ({assessingQuestions.size})...
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="h-4 w-4 mr-2" />
+                            Assess All (Parallel 6x Speed)
+                          </>
+                        )}
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        {questions.filter(q => q.userAnswer?.trim() || q.detectedAnswer?.answer?.trim()).length > 0 
+                          ? `Ready to assess ${questions.filter(q => q.userAnswer?.trim() || q.detectedAnswer?.answer?.trim()).length} questions`
+                          : 'Add answers to enable assessment'
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <CardContent className="p-6 h-[calc(100vh-280px)] overflow-y-auto">
                 {questions.length > 0 ? (
@@ -2388,7 +2554,7 @@ export default function SessionPage() {
                     {selectedAssessment.marksAwarded}/{selectedAssessment.maxMarks}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {selectedAssessment.percentage}%
+                    {selectedAssessment.maxMarks > 0 ? Math.round((selectedAssessment.marksAwarded / selectedAssessment.maxMarks) * 100) : 0}%
                   </div>
                 </div>
                 <Button

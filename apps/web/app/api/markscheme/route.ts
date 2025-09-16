@@ -25,7 +25,7 @@ async function PDFDocumentsToMarkScheme(pdf: string, filename: string): Promise<
     acceptableAnswers: z.array(z.string()).optional().nullable().describe("Array of acceptable answer variations"),
     keywords: z.array(z.string()).optional().nullable().describe("Key terms/concepts that should be present in answers"),
     pageNumber: z.number().describe("Page number where this mark scheme appears"),
-    semanticSummary: z.string().describe("A concise one-line summary of the marking criteria for semantic search")
+    semanticSummary: z.string().describe("A concise one-line summary of the marking criteria for semantic search. INCLUDE question number")
   });
 
   const GPTMarkSchemeSchema = z.object({
