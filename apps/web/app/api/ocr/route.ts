@@ -47,8 +47,8 @@ async function PDFDocumentsToQnA(pdf: string, filename: string): Promise<any> {
   const answerSchema = z.union([textAnswer, mcqAnswer]).nullable();
 
   const questionAndAnswerSchema = z.object({
-    questionNumber: z.string().describe("The unique identifier for the question, such as '1', '2(a)', '3b(i)', etc. Can only have one of these per question. IMPORTANT"),
-    question: z.string().describe("The text of the actual question"),
+    questionNumber: z.string().describe("The unique identifier for the question, such as for EXAMPLE: '1',  OR '2(a)',  OR '3b(i)', etc. Can only have one of these per question. IMPORTANT"),
+    question: z.string().describe("The text of the actual question BEING SPECIFIED. DO NOT INCLUDE MULTIPLE QUESTIONS IN THIS FIELD"),
     type: z.enum(["main","subquestion","subpart"]).describe("main = 1,2,3 etc. subquestion = 1(a),1(b),2(a),2(b) etc. subpart = 1(a)(i), 1(a)(ii), 1(b)(i), 1(b)(ii) etc. IMPORTANT"),
     parentQuestionNumber: z.number().int().nullable().describe("the parent question number like 1, 2, 3 etc if the question is a child of it. IMPORTANT"),
     isMultipleChoice: z.boolean().default(false),
@@ -56,7 +56,7 @@ async function PDFDocumentsToQnA(pdf: string, filename: string): Promise<any> {
     answer: answerSchema,
     maxMarks: z.number().int().nullable().describe("Total marks available for this question"),
     pageNumber: z.number(),
-    semanticSummary: z.string().describe("A concise one-line summary of the question and answer for semantic and vector search purposes. INCLUDE question number"),
+    semanticSummary: z.string().describe("A concise one-line summary of the question and answer for semantic and vector search purposes. INCLUDE QUESTION NUMBER"),
   })
 
 
@@ -69,11 +69,11 @@ async function PDFDocumentsToQnA(pdf: string, filename: string): Promise<any> {
     const responsePayload = {
     model: "gpt-5-mini",
     reasoning: {effort: "medium"},
-    text: {verbosity: "low", format: zodTextFormat(GPTschema, 'QnASchema')},
+    text: {verbosity: "medium", format: zodTextFormat(GPTschema, 'QnASchema')},
     input: [
       { role: "system", content: "You are a helpful assistant that extracts structured data from educational documents. You will be provided with a document. Your task is to analyze the content of the document and extract all relevant questions and answers, including multiple-choice questions, true/false questions, and written answer questions. The extracted data should be structured in a JSON format according to the provided schema. Imagine yourself as an intelligent OCR. Conform Strictly to the provided schema and their descriptive fields." },
       { role: "user", content: [
-        {type: "input_text", text: `Extract the questions and answers from pdf provided in order using the schema provided. Mathematical expressions will be displayed as LaTeX syntax. Example Output for one question: {questionNumber:"16(a)(i)",question:"Electric vehicles ...",type:"main",parentQuestionNumber:16,isMultipleChoice:false,imageDescription:"Schematic of simple ...",answer:{type:"text",answer:"Current flows in the ..."},pageNumber:16,semanticSummary:"Explain motor torque ..."}`},
+        {type: "input_text", text: `Extract the questions and answers from pdf provided in order using the schema provided. Mathematical expressions will be displayed as LaTeX syntax. Example Output for one question: {questionNumber:"16(a)(i)",question:"Electric vehicles ...",type:"main",parentQuestionNumber:16,isMultipleChoice:false,imageDescription:"Schematic of simple ...",answer:{type:"text",answer:"Current flows in the ..."},pageNumber:16,semanticSummary:"Question 16(a)(i) Explain motor torque ..."}`},
         {type: "input_file", file_data: pdf, filename}
       ]}
     ],
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
 
 
 
-  // console.log(qna)
+  console.log(qna, qna.answer)
 
   // //write to file
   // const dir = 'C:\\Users\\rayap\\OneDrive\\Desktop\\tidbHackathon\\apps\\backend\\output\\json';

@@ -17,15 +17,15 @@ const client = new OpenAI({
 async function PDFDocumentsToMarkScheme(pdf: string, filename: string): Promise<any> {
   // Zod schema for mark scheme extraction
   const markSchemeSchema = z.object({
-    questionNumber: z.string().describe("The unique identifier for the question, such as '1', '2(a)', '3b(i)', etc."),
-    parentQuestionNumber: z.number().int().nullable().describe("The parent question number if applicable, e.g., 1, 2"),
-    markingCriteria: z.string().describe("Detailed marking criteria and rubric for this question"),
+    questionNumber: z.string().describe("The unique identifier for the question, such as FOR EXAMPLE '1', OR '2(a)', OR '3b(i)', etc."),
+    parentQuestionNumber: z.number().int().nullable().describe("The parent question number if applicable, EXAMPLE 1 OR 2. Use this if the question number is a subpart like 1(a)(i)."),
+    markingCriteria: z.string().describe("Detailed marking criteria and rubric for this ONE QUESTION. DO NOT INCLUDE OTHER QUESTIONS. "),
     maxMarks: z.number().describe("Total marks available for this question"),
     markBreakdown: z.record(z.union([z.string(), z.number()])).optional().nullable().describe("Simple mark allocation breakdown as key-value pairs (e.g., {\"method\": 2, \"accuracy\": 3})"),
     acceptableAnswers: z.array(z.string()).optional().nullable().describe("Array of acceptable answer variations"),
     keywords: z.array(z.string()).optional().nullable().describe("Key terms/concepts that should be present in answers"),
     pageNumber: z.number().describe("Page number where this mark scheme appears"),
-    semanticSummary: z.string().describe("A concise one-line summary of the marking criteria for semantic search. INCLUDE question number")
+    semanticSummary: z.string().describe("A concise one-line summary of the marking criteria for semantic search. INCLUDE question number EXAMPLE: Question 4(a)(i) {semantic summary here}")
   });
 
   const GPTMarkSchemeSchema = z.object({
@@ -37,7 +37,7 @@ async function PDFDocumentsToMarkScheme(pdf: string, filename: string): Promise<
 
   const responsePayload = {
     model: "gpt-5-mini",
-    reasoning: {effort: "medium"},
+    reasoning: {effort: "minimal"},
     text: {verbosity: "low", format: zodTextFormat(GPTMarkSchemeSchema, 'MarkSchemeSchema')},
     input: [
       { 

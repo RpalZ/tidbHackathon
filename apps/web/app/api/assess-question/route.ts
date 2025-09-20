@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     console.log(`Assessing question ${question.questionNumber} for user ${session.user.email}`);
 
     // Step 1: Find mark scheme using 1-to-1 match or vector search
-    const markScheme = await findMarkSchemeForQuestion(questionId, question.questionNumber);
+    const markScheme = await findMarkSchemeForQuestion(questionId, question.file?.linkedMarkScheme?.id);
 
     if (!markScheme) {
       return NextResponse.json({ 

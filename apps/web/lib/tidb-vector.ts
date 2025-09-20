@@ -713,9 +713,11 @@ export async function searchSimilarMarkSchemes(
       queryVectorString, // for similarity calculation
       ...(fileId ? [fileId] : []),
       queryVectorString, // for WHERE clause
-      threshold,
+      0,
       5 // limit to top 5 matches
     ]
+
+    console.log({fileId, queryVectorString})
 
     const searchSQL = `
       SELECT 
@@ -739,14 +741,16 @@ export async function searchSimilarMarkSchemes(
 
     const results = await executeVectorSQL(searchSQL, params)
 
+    console.log({result: results[0].acceptableAnswers})
+
     return results.map((row: any) => ({
       id: row.id,
       questionNumber: row.questionNumber,
       markingCriteria: row.markingCriteria,
       maxMarks: row.maxMarks,
       markBreakdown: row.markBreakdown,
-      acceptableAnswers: row.acceptableAnswers ? JSON.parse(row.acceptableAnswers) : null,
-      keywords: row.keywords ? JSON.parse(row.keywords) : null,
+      acceptableAnswers: row.acceptableAnswers,
+      keywords: row.keywords,
       semanticSummary: row.semanticSummary,
       similarity: Math.round(row.similarity * 10000) / 10000
     }))
@@ -815,7 +819,7 @@ export async function findBestMarkScheme(
       const vectorMatches = await searchSimilarMarkSchemes(
         searchQuery,
         markSchemeFileId, // Prefer linked mark scheme file if available
-        0.7 // 70% similarity threshold
+        0.5 // 70% similarity threshold
       )
 
       if (vectorMatches.length > 0) {
@@ -1108,7 +1112,7 @@ const responseSchema = z.object({
 
     const response = await openai.responses.parse({
       model: "gpt-5-mini",
-      reasoning: { effort: "minimal"},
+      reasoning: { effort: "medium"},
       text: {verbosity: 'medium', format: zodTextFormat(responseSchema, "responseSchema")},
       input: [
         {
